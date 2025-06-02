@@ -12,6 +12,7 @@ import ComputersPage from './pages/computers-page';
 import { HomePage } from './pages/home-page';
 import { NotFoundPage } from './pages/not-found-page';
 import { ProfilePage } from './pages/profile-page';
+import ProjectPage from './pages/project-page';
 import { SignInPage } from './pages/sign-in-page';
 import TeamPage from './pages/team-page';
 import TemplatesPage from './pages/templates-page';
@@ -41,6 +42,7 @@ function App() {
                         <Route path="/templates" element={<TemplatesPage />} />
                         <Route path="/api-keys" element={<APIKeysPage />} />
                         <Route path="/profile" element={<ProfilePage />} />
+                        <Route path="/project" element={<ProjectPage />} />
                         <Route path="/team" element={<TeamPage />} />
                         <Route path="/billing" element={<BillingPage />} />
                       </Route>

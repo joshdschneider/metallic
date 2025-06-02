@@ -132,12 +132,13 @@ export default function TemplatesPage() {
               <Table.ColumnHeaderCell>Storage</Table.ColumnHeaderCell>
               <Table.ColumnHeaderCell>Visibility</Table.ColumnHeaderCell>
               <Table.ColumnHeaderCell>Created At</Table.ColumnHeaderCell>
+              <Table.ColumnHeaderCell />
             </Table.Row>
           </Table.Header>
           <Table.Body>
             {templates.map((template) => {
               return (
-                <Table.Row className="row-clickable row-va-middle">
+                <Table.Row key={template.slug} className="row-clickable row-va-middle">
                   <Table.Cell>
                     <Flex align="center" justify="start" gap="2">
                       <Code variant="ghost" color="gray" highContrast>
@@ -151,14 +152,14 @@ export default function TemplatesPage() {
                     </Text>
                   </Table.Cell>
                   <Table.Cell>
-                    <Text as="span" color="gray">
+                    <Code variant="ghost" color="gray">
                       {template.instance_type}
-                    </Text>
+                    </Code>
                   </Table.Cell>
                   <Table.Cell>
-                    <Text as="span" color="gray">
+                    <Code variant="ghost" color="gray">
                       {template.storage_gb}GB
-                    </Text>
+                    </Code>
                   </Table.Cell>
                   <Table.Cell>
                     {template.is_public ? (

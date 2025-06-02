@@ -8,7 +8,13 @@ import {
   updateOrganization,
   updateOrganizationMember
 } from '../controllers/organization.controller.js';
-import { createProject, deleteProject, listProjects, retrieveProject } from '../controllers/project.controller.js';
+import {
+  createProject,
+  deleteProject,
+  listProjects,
+  retrieveProject,
+  updateProject
+} from '../controllers/project.controller.js';
 
 const organizationRouter = express.Router();
 
@@ -18,6 +24,7 @@ organizationRouter.route('/:organization_id').put(updateOrganization);
 organizationRouter.route('/:organization_id/projects').get(listProjects);
 organizationRouter.route('/:organization_id/projects').post(createProject);
 organizationRouter.route('/:organization_id/projects/:project_id').get(retrieveProject);
+organizationRouter.route('/:organization_id/projects/:project_id').put(updateProject);
 organizationRouter.route('/:organization_id/projects/:project_id').delete(deleteProject);
 organizationRouter.route('/:organization_id/members').get(listOrganizationMembers);
 organizationRouter.route('/:organization_id/members/:membership_id').put(updateOrganizationMember);

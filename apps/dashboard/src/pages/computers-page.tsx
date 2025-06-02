@@ -8,7 +8,20 @@ import {
   MagnifyingGlassIcon,
   PlusIcon
 } from '@radix-ui/react-icons';
-import { Box, Button, Card, Code, Dialog, Flex, Heading, Link, Table, Text, TextField } from '@radix-ui/themes';
+import {
+  Box,
+  Button,
+  Card,
+  Code,
+  Dialog,
+  Flex,
+  Heading,
+  Link,
+  Table,
+  Text,
+  TextField,
+  VisuallyHidden
+} from '@radix-ui/themes';
 import { ChangeEvent, Fragment, useEffect, useState } from 'react';
 import { useDebounce } from 'use-debounce';
 import { MultiCodeBlock } from '../components/code-block/multi-code-block';
@@ -301,6 +314,10 @@ type CreateComputerDialogProps = {
 function CreateComputerDialog({ show, setShow }: CreateComputerDialogProps) {
   return (
     <Dialog.Root open={show} onOpenChange={() => setShow(false)}>
+      <VisuallyHidden>
+        <Dialog.Title>Create a computer</Dialog.Title>
+        <Dialog.Description>Install the SDK and spin up a new computer in a few lines.</Dialog.Description>
+      </VisuallyHidden>
       <Dialog.Content>
         <Flex direction="column" justify="start" gap="4" width="100%">
           <Box>

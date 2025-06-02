@@ -1,5 +1,11 @@
 import { ComputeProvider } from '@metallichq/providers';
-import { DEFAULT_PROJECT_NAME, HttpError, OrganizationService, ProjectService } from '@metallichq/shared';
+import {
+  ApiKeyService,
+  DEFAULT_PROJECT_NAME,
+  HttpError,
+  OrganizationService,
+  ProjectService
+} from '@metallichq/shared';
 import { ProjectDeletedObject, ProjectObject } from '@metallichq/types';
 import { NextFunction, Request, Response } from 'express';
 import { z } from 'zod';
@@ -122,7 +128,9 @@ export const createProject = async (req: Request, res: Response, next: NextFunct
       organization_id: organization.id,
       name: name ?? DEFAULT_PROJECT_NAME
     });
+
     await ComputeProvider.onProjectCreated(project.id);
+    await ApiKeyService.createApiKey({ projectId: project.id, name: null });
 
     const projectObject: ProjectObject = {
       object: 'project',
@@ -134,6 +142,50 @@ export const createProject = async (req: Request, res: Response, next: NextFunct
     };
 
     res.status(201).json(projectObject);
+  } catch (err) {
+    next(err);
+  }
+};
+
+export const UpdateProjectRequestSchema = z.object({
+  method: z.literal('PUT'),
+  locals: SessionAuthResponseLocalsSchema,
+  params: z.object({ organization_id: z.string(), project_id: z.string() }),
+  body: z.object({ name: z.string() })
+});
+
+export const updateProject = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    const parsedReq = UpdateProjectRequestSchema.safeParse({
+      method: req.method,
+      locals: res.locals,
+      params: req.params,
+      body: req.body
+    });
+
+    if (!parsedReq.success) {
+      throw HttpError.validation(parsedReq.error);
+    }
+
+    const { organization_id, project_id } = parsedReq.data.params;
+    const organization = await OrganizationService.getOrganizationById(organization_id);
+    if (!organization) {
+      throw HttpError.notFound(`Organization not found with ID ${organization_id}`);
+    }
+
+    const { name } = parsedReq.data.body;
+    const project = await ProjectService.updateProject(project_id, { name });
+
+    const projectObject: ProjectObject = {
+      object: 'project',
+      id: project.id,
+      name: project.name,
+      organization_id: project.organization_id,
+      created_at: project.created_at,
+      updated_at: project.updated_at
+    };
+
+    res.status(200).json(projectObject);
   } catch (err) {
     next(err);
   }

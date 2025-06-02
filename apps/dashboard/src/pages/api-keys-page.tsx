@@ -20,7 +20,8 @@ import {
   Skeleton,
   Table,
   Text,
-  TextField
+  TextField,
+  VisuallyHidden
 } from '@radix-ui/themes';
 import { Dispatch, SetStateAction, useEffect, useState } from 'react';
 import { CopyButton } from '../components/copy-button';
@@ -277,6 +278,10 @@ function CreateKeyDialog({ show, setShow, setKeys, projectId }: CreateKeyDialogP
 
   return (
     <Dialog.Root open={show} onOpenChange={handleOpenChange}>
+      <VisuallyHidden>
+        <Dialog.Title>Create new secret key</Dialog.Title>
+        <Dialog.Description>Create a new secret key to access the API.</Dialog.Description>
+      </VisuallyHidden>
       <Dialog.Content width="450px">
         <Flex direction="column" justify="start" gap="4" width="100%">
           <Box>
@@ -315,6 +320,12 @@ type ViewKeyDialogProps = {
 function ViewKeyDialog({ show, setShow, keyToView }: ViewKeyDialogProps) {
   return (
     <Dialog.Root open={show} onOpenChange={(open) => setShow(open)}>
+      <VisuallyHidden>
+        <Dialog.Title>Your API key</Dialog.Title>
+        <Dialog.Description>
+          Do not share your API key with others or expose it in the browser or other client-side code.
+        </Dialog.Description>
+      </VisuallyHidden>
       <Dialog.Content width="450px">
         <Flex direction="column" justify="start" gap="4" width="100%">
           <Box>
@@ -401,6 +412,10 @@ function UpdateKeyDialog({ show, setShow, keyId, keys, setKeys, projectId }: Upd
 
   return (
     <Dialog.Root open={show} onOpenChange={handleOpenChange}>
+      <VisuallyHidden>
+        <Dialog.Title>Update secret key</Dialog.Title>
+        <Dialog.Description>Update the name of the secret key.</Dialog.Description>
+      </VisuallyHidden>
       <Dialog.Content width="450px">
         <Flex direction="column" justify="start" gap="4" width="100%">
           <Box>
@@ -471,6 +486,10 @@ function DeleteKeyDialog({ show, setShow, keyId, setKeys, projectId }: DeleteKey
 
   return (
     <Dialog.Root open={show} onOpenChange={handleOpenChange}>
+      <VisuallyHidden>
+        <Dialog.Title>Delete secret key</Dialog.Title>
+        <Dialog.Description>Are you sure? This action can not be undone.</Dialog.Description>
+      </VisuallyHidden>
       <Dialog.Content width="450px">
         <Flex direction="column" justify="start" gap="4" width="100%">
           <Box>

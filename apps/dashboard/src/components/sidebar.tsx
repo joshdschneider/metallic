@@ -1,7 +1,7 @@
 import { CubeIcon, DashboardIcon, ExternalLinkIcon, LayersIcon, ReaderIcon } from '@radix-ui/react-icons';
 import { Button, Flex, Link as RadixLink, ScrollArea, Text } from '@radix-ui/themes';
 import { Link, useLocation } from 'react-router-dom';
-import { CreditCardIcon, GithubIcon, KeyIcon, PeopleIcon, SidePanelIcon } from './custom-icons';
+import { CreditCardIcon, FolderIcon, GithubIcon, KeyIcon, PeopleIcon, SidePanelIcon } from './custom-icons';
 
 interface SidebarProps {
   isCollapsed: boolean;
@@ -117,12 +117,12 @@ export function Sidebar({ isCollapsed, setIsCollapsed }: SidebarProps) {
                       <RadixLink
                         asChild
                         color="gray"
-                        href="/billing"
-                        className={`sidebar-link ${isActive(['/billing']) ? 'active' : ''}`}
+                        href="/project"
+                        className={`sidebar-link ${isActive(['/project']) ? 'active' : ''}`}
                       >
-                        <Link to="/billing">
-                          <CreditCardIcon color="var(--gray-9)" />
-                          {'Billing'}
+                        <Link to="/project">
+                          <FolderIcon color="var(--gray-9)" />
+                          {'Project'}
                         </Link>
                       </RadixLink>
                     </li>
@@ -136,6 +136,19 @@ export function Sidebar({ isCollapsed, setIsCollapsed }: SidebarProps) {
                         <Link to="/team">
                           <PeopleIcon color="var(--gray-9)" />
                           {'Team'}
+                        </Link>
+                      </RadixLink>
+                    </li>
+                    <li>
+                      <RadixLink
+                        asChild
+                        color="gray"
+                        href="/billing"
+                        className={`sidebar-link ${isActive(['/billing']) ? 'active' : ''}`}
+                      >
+                        <Link to="/billing">
+                          <CreditCardIcon color="var(--gray-9)" />
+                          {'Billing'}
                         </Link>
                       </RadixLink>
                     </li>

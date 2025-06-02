@@ -1,6 +1,6 @@
 import { OrganizationObject } from '@metallichq/types';
 import { Pencil1Icon } from '@radix-ui/react-icons';
-import { Box, Button, Card, Dialog, Flex, Heading, Text, TextField } from '@radix-ui/themes';
+import { Box, Button, Card, Dialog, Flex, Heading, Text, TextField, VisuallyHidden } from '@radix-ui/themes';
 import { useEffect, useState } from 'react';
 import { InvitationsTable } from '../components/invitations-table';
 import { Layout } from '../components/layout';
@@ -144,6 +144,10 @@ function EditTeamDialog({ show, setShow, onSave }: EditTeamDialogProps) {
 
   return (
     <Dialog.Root open={show} onOpenChange={handleOpenChange}>
+      <VisuallyHidden>
+        <Dialog.Title>Team name</Dialog.Title>
+        <Dialog.Description>Edit the team name</Dialog.Description>
+      </VisuallyHidden>
       <Dialog.Content maxWidth={'400px'}>
         <Flex direction="column" justify="start" gap="4" width="100%">
           <Box>

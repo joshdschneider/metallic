@@ -372,7 +372,7 @@ export const HomePage: React.FC = () => {
                     Documentation
                   </RadixLink>
                   <Text size="2" color="gray">
-                    Start integrating Metallic computers into your app.
+                    Start integrating your agent with Metallic computers.
                   </Text>
                 </Flex>
               </Flex>
