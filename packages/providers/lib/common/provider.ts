@@ -18,11 +18,11 @@ import * as FlyMachines from '../fly/machines.js';
 import { MachineGuest } from '../fly/types.js';
 import * as FlyVolumes from '../fly/volumes.js';
 
-export const createProject = async (projectId: string): Promise<void> => {
+export const onProjectCreated = async (projectId: string): Promise<void> => {
   await FlyApps.createApp({ app_name: FlyHelpers.projectIdToAppName(projectId) });
 };
 
-export const deleteProject = async (projectId: string): Promise<void> => {
+export const onProjectDeleted = async (projectId: string): Promise<void> => {
   await FlyApps.destroyApp({ app_name: FlyHelpers.projectIdToAppName(projectId) });
 };
 

@@ -1,15 +1,12 @@
-import { database, Prisma } from '@metallichq/database';
-import { PaginationParameters, Template, TemplateSchema } from '@metallichq/types';
+import { database } from '@metallichq/database';
+import { Template, TemplateSchema } from '@metallichq/types';
 import { z } from 'zod';
-import { PAGINATION_DEFAULT_LIMIT, PAGINATION_MAX_LIMIT, PAGINATION_MIN_LIMIT } from '../utils/constants.js';
+import { INITIAL_TEMPLATES } from '../utils/constants.js';
 import { deleted, now } from '../utils/helpers.js';
 
-export const getTemplateBySlug = async (projectId: string, slug: string): Promise<Template | null> => {
+export const getTemplateBySlug = async (slug: string): Promise<Template | null> => {
   const template = await database.template.findUnique({
-    where: {
-      slug_project_id: { project_id: projectId, slug },
-      deleted_at: null
-    }
+    where: { slug, deleted_at: null }
   });
 
   if (!template) {
@@ -19,65 +16,28 @@ export const getTemplateBySlug = async (projectId: string, slug: string): Promis
   return TemplateSchema.parse(template);
 };
 
-export const getTemplatesByProjectId = async (
-  projectId: string,
-  options?: PaginationParameters
-): Promise<{
-  templates: Template[];
-  hasMore: boolean;
-  cursorFirst: string | null;
-  cursorLast: string | null;
-}> => {
-  const where: Prisma.TemplateWhereInput = {
-    deleted_at: null,
-    project_id: projectId
-  };
-
-  let cursor: Prisma.TemplateWhereUniqueInput | undefined;
-  const orderBy: Prisma.TemplateOrderByWithRelationInput = {
-    created_at: options?.order || 'desc'
-  };
-
-  const limit = Math.min(
-    PAGINATION_MAX_LIMIT,
-    Math.max(PAGINATION_MIN_LIMIT, options?.limit || PAGINATION_DEFAULT_LIMIT)
-  );
-
-  let take = limit + 1;
-  let skip = 0;
-
-  if (options?.after) {
-    cursor = { slug_project_id: { project_id: projectId, slug: options.after } };
-    skip = 1;
-  } else if (options?.before) {
-    cursor = { slug_project_id: { project_id: projectId, slug: options.before } };
-    skip = 1;
-    take = -take;
-    orderBy.created_at = orderBy.created_at === 'asc' ? 'desc' : 'asc';
-  }
-
-  const templatesRaw = await database.template.findMany({
-    where,
-    cursor,
-    skip,
-    take,
-    orderBy
+export const listAllTemplates = async (): Promise<Template[]> => {
+  const templates = await database.template.findMany({
+    where: { deleted_at: null }
   });
 
-  let templates = z.array(TemplateSchema).parse(templatesRaw);
-  const hasMore = templates.length > limit;
-  if (hasMore) {
-    templates = templates.slice(0, -1);
-  }
+  return z.array(TemplateSchema).parse(templates);
+};
 
-  if (options?.before) {
-    templates.reverse();
-  }
+export const listPrivateTemplates = async (projectId: string): Promise<Template[]> => {
+  const templates = await database.template.findMany({
+    where: { deleted_at: null, is_public: false, project_id: projectId }
+  });
 
-  const cursorFirst = templates[0]?.slug || null;
-  const cursorLast = templates[templates.length - 1]?.slug || null;
+  return z.array(TemplateSchema).parse(templates);
+};
 
-  return { templates, hasMore, cursorFirst, cursorLast };
+export const listPublicTemplates = async (): Promise<Template[]> => {
+  const templates = await database.template.findMany({
+    where: { deleted_at: null, is_public: true }
+  });
+
+  return z.array(TemplateSchema).parse(templates);
 };
 
 export const createTemplate = async (
@@ -102,7 +62,7 @@ export const updateTemplate = async (
   template: Partial<Template>
 ): Promise<Template> => {
   const updatedTemplate = await database.template.update({
-    where: { slug_project_id: { project_id: projectId, slug }, deleted_at: null },
+    where: { slug, project_id: projectId, deleted_at: null },
     data: {
       ...template,
       init: template.init ?? undefined,
@@ -115,7 +75,17 @@ export const updateTemplate = async (
 
 export const destroyTemplate = async (projectId: string, slug: string): Promise<void> => {
   await database.template.update({
-    where: { slug_project_id: { project_id: projectId, slug } },
+    where: { slug, project_id: projectId, deleted_at: null },
     data: { slug: deleted(slug), deleted_at: now() }
   });
+};
+
+export const seedTemplates = async (): Promise<void> => {
+  const publicTemplates = await listPublicTemplates();
+  const templatesToSeed = INITIAL_TEMPLATES.filter((t) => !publicTemplates.map((pt) => pt.slug).includes(t.slug));
+  if (templatesToSeed.length === 0) {
+    return;
+  }
+
+  await Promise.all(templatesToSeed.map((t) => createTemplate(t)));
 };

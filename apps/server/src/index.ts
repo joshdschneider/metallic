@@ -1,4 +1,4 @@
-import { envVars, getLogger } from '@metallichq/shared';
+import { envVars, getLogger, TemplateService } from '@metallichq/shared';
 import express, { type Express } from 'express';
 import http from 'http';
 import { router } from './routes/base.router.js';
@@ -15,6 +15,7 @@ function createApp(): Express {
 async function start() {
   const app = createApp();
   const server = http.createServer(app);
+  await TemplateService.seedTemplates();
   server.listen(envVars.SERVER_PORT, () => {
     logger.info(`Metallic API running on port ${envVars.SERVER_PORT}`);
   });

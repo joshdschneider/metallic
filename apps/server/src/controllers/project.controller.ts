@@ -122,8 +122,8 @@ export const createProject = async (req: Request, res: Response, next: NextFunct
       organization_id: organization.id,
       name: name ?? DEFAULT_PROJECT_NAME
     });
+    await ComputeProvider.onProjectCreated(project.id);
 
-    await ComputeProvider.createProject(project.id);
     const projectObject: ProjectObject = {
       object: 'project',
       id: project.id,
@@ -169,6 +169,8 @@ export const deleteProject = async (req: Request, res: Response, next: NextFunct
     }
 
     await ProjectService.deleteProject(project_id);
+    await ComputeProvider.onProjectDeleted(project_id);
+
     const projectDeletedObject: ProjectDeletedObject = {
       object: 'project',
       id: project_id,

@@ -83,23 +83,22 @@ model ApiKey {
 }
 
 model Template {
-  slug          String
-  project_id    String
+  slug          String  @unique
+  project_id    String?
   name          String?
   description   String?
   instance_type String
   storage_gb    Int
   image         String
   init          Json?
+  is_public     Boolean
   created_at    String
   updated_at    String
   deleted_at    String?
 
   computers Computer[]
 
-  project Project @relation(fields: [project_id], references: [id])
-
-  @@unique([slug, project_id])
+  project Project? @relation(fields: [project_id], references: [id])
 }
 
 model Computer {
@@ -118,5 +117,5 @@ model Computer {
   deleted_at    String?
 
   project  Project  @relation(fields: [project_id], references: [id])
-  template Template @relation(fields: [template_slug, project_id], references: [slug, project_id])
+  template Template @relation(fields: [template_slug], references: [slug])
 }

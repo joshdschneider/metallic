@@ -145,13 +145,15 @@ export const createComputer = async (req: Request, res: Response, next: NextFunc
     // Validate template
     let template: Template;
     if (body.template) {
-      const existingTemplate = await TemplateService.getTemplateBySlug(projectId, body.template);
+      const existingTemplate = await TemplateService.getTemplateBySlug(body.template);
       if (!existingTemplate) {
         throw HttpError.badRequest(`Template "${body.template}" not found`);
+      } else if (existingTemplate.project_id !== null && existingTemplate.project_id !== projectId) {
+        throw HttpError.badRequest(`You do not have permission to use template "${body.template}"`);
       }
       template = existingTemplate;
     } else {
-      const defaultTemplate = await TemplateService.getTemplateBySlug(projectId, DEFAULT_TEMPLATE_SLUG);
+      const defaultTemplate = await TemplateService.getTemplateBySlug(DEFAULT_TEMPLATE_SLUG);
       if (!defaultTemplate) {
         throw new Error('Failed to retrieve default template');
       }

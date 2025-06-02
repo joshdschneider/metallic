@@ -7,13 +7,14 @@ export const InitSchema = z.object({
 
 export const TemplateSchema = z.object({
   slug: z.string(),
-  project_id: z.string(),
+  project_id: z.string().nullable(),
   name: z.string().nullable(),
   description: z.string().nullable(),
   instance_type: z.string(),
   storage_gb: z.number(),
   image: z.string(),
   init: InitSchema.nullable(),
+  is_public: z.boolean(),
   created_at: z.string(),
   updated_at: z.string(),
   deleted_at: z.string().nullable()

@@ -47,11 +47,3 @@ export type WaitForStateRequest = ProviderComputerIdentifier & {
 };
 
 export type DestroyComputerRequest = ProviderComputerIdentifier;
-
-export interface CreateTemplateRequest {
-  // TODO: Implement
-}
-
-export interface DestroyTemplateRequest {
-  // TODO: Implement
-}

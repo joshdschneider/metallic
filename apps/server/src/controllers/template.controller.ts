@@ -35,11 +35,12 @@ export const listTemplates = async (req: Request, res: Response, next: NextFunct
       throw HttpError.badRequest('Project not found');
     }
 
-    const { templates, cursorFirst, cursorLast, hasMore } = await TemplateService.getTemplatesByProjectId(projectId, {
-      ...parsedReq.data.query
-    });
+    const [publicTemplates, privateTemplates] = await Promise.all([
+      TemplateService.listPublicTemplates(),
+      TemplateService.listPrivateTemplates(projectId)
+    ]);
 
-    const templateObjects: TemplateObject[] = templates.map((template) => {
+    const templateObjects: TemplateObject[] = [...publicTemplates, ...privateTemplates].map((template) => {
       return {
         object: 'template',
         slug: template.slug,
@@ -49,18 +50,13 @@ export const listTemplates = async (req: Request, res: Response, next: NextFunct
         storage_gb: template.storage_gb,
         image: template.image,
         init: template.init,
+        is_public: template.is_public,
         created_at: template.created_at,
         updated_at: template.updated_at
       };
     });
 
-    res.status(200).json({
-      object: 'list',
-      data: templateObjects,
-      first: cursorFirst,
-      last: cursorLast,
-      has_more: hasMore
-    });
+    res.status(200).json({ object: 'list', data: templateObjects });
   } catch (err) {
     next(err);
   }
@@ -76,7 +72,8 @@ const CreateTemplateRequestSchema = z.object({
     instance_type: z.string().optional(),
     storage_gb: z.number().optional(),
     image: z.string(),
-    init: InitSchema.nullable().optional()
+    init: InitSchema.nullable().optional(),
+    is_public: z.boolean().optional()
   })
 });
 
@@ -97,7 +94,7 @@ export const createTemplate = async (req: Request, res: Response, next: NextFunc
       throw HttpError.badRequest('Project not found');
     }
 
-    const { slug, name, description, instance_type, storage_gb, image, init } = parsedReq.data.body;
+    const { slug, name, description, instance_type, storage_gb, image, init, is_public } = parsedReq.data.body;
 
     const instanceType = instance_type || DEFAULT_INSTANCE_TYPE;
     const instanceDetails = INSTANCE_TYPES[instanceType];
@@ -120,7 +117,8 @@ export const createTemplate = async (req: Request, res: Response, next: NextFunc
       instance_type: instanceType,
       storage_gb: storageGb,
       image,
-      init: init || null
+      init: init || null,
+      is_public: is_public ?? false
     });
 
     const templateObject: TemplateObject = {
@@ -132,6 +130,7 @@ export const createTemplate = async (req: Request, res: Response, next: NextFunc
       storage_gb: template.storage_gb,
       image: template.image,
       init: template.init,
+      is_public: template.is_public,
       created_at: template.created_at,
       updated_at: template.updated_at
     };
@@ -166,9 +165,11 @@ export const retrieveTemplate = async (req: Request, res: Response, next: NextFu
     }
 
     const { template_slug } = parsedReq.data.params;
-    const template = await TemplateService.getTemplateBySlug(projectId, template_slug);
+    const template = await TemplateService.getTemplateBySlug(template_slug);
     if (!template) {
       throw HttpError.notFound(`Template not found by slug: "${template_slug}"`);
+    } else if (template.project_id !== null && template.project_id !== projectId) {
+      throw HttpError.badRequest(`You do not have permission to access template "${template_slug}"`);
     }
 
     const templateObject: TemplateObject = {
@@ -180,6 +181,7 @@ export const retrieveTemplate = async (req: Request, res: Response, next: NextFu
       storage_gb: template.storage_gb,
       image: template.image,
       init: template.init,
+      is_public: template.is_public,
       created_at: template.created_at,
       updated_at: template.updated_at
     };
@@ -196,7 +198,8 @@ const UpdateTemplateRequestSchema = z.object({
   params: z.object({ template_slug: z.string() }),
   body: z.object({
     name: z.string().nullable().optional(),
-    description: z.string().nullable().optional()
+    description: z.string().nullable().optional(),
+    is_public: z.boolean().optional()
   })
 });
 
@@ -219,16 +222,19 @@ export const updateTemplate = async (req: Request, res: Response, next: NextFunc
     }
 
     const { template_slug } = parsedReq.data.params;
-    const { name, description } = parsedReq.data.body;
+    const { name, description, is_public } = parsedReq.data.body;
 
-    const template = await TemplateService.getTemplateBySlug(projectId, template_slug);
+    const template = await TemplateService.getTemplateBySlug(template_slug);
     if (!template) {
       throw HttpError.notFound(`Template not found by slug: "${template_slug}"`);
+    } else if (template.project_id !== projectId) {
+      throw HttpError.badRequest(`You do not have permission to update template "${template_slug}"`);
     }
 
     const updatedTemplate = await TemplateService.updateTemplate(projectId, template_slug, {
       name,
-      description
+      description,
+      is_public
     });
 
     const templateObject: TemplateObject = {
@@ -240,6 +246,7 @@ export const updateTemplate = async (req: Request, res: Response, next: NextFunc
       storage_gb: updatedTemplate.storage_gb,
       image: updatedTemplate.image,
       init: updatedTemplate.init,
+      is_public: updatedTemplate.is_public,
       created_at: updatedTemplate.created_at,
       updated_at: updatedTemplate.updated_at
     };
@@ -274,7 +281,7 @@ export const destroyTemplate = async (req: Request, res: Response, next: NextFun
     }
 
     const { template_slug } = parsedReq.data.params;
-    const template = await TemplateService.getTemplateBySlug(projectId, template_slug);
+    const template = await TemplateService.getTemplateBySlug(template_slug);
     if (!template) {
       throw HttpError.notFound(`Template not found by slug: "${template_slug}"`);
     } else if (template.project_id !== projectId) {
@@ -282,7 +289,6 @@ export const destroyTemplate = async (req: Request, res: Response, next: NextFun
     }
 
     await TemplateService.destroyTemplate(projectId, template_slug);
-
     const templateDestroyedObject: TemplateDestroyedObject = {
       object: 'template',
       slug: template.slug,

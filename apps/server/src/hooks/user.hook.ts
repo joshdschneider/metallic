@@ -68,7 +68,7 @@ export const onUserAuthenticated = async (workosUser: WorkOSUser) => {
 
     await Promise.all([
       ApiKeyService.createApiKey({ projectId: project.id, name: null }),
-      ComputeProvider.createProject(project.id)
+      ComputeProvider.onProjectCreated(project.id)
     ]);
   } else {
     for (const workosOrgMembership of workosOrgMemberships) {
@@ -106,7 +106,7 @@ export const onUserAuthenticated = async (workosUser: WorkOSUser) => {
 
         await Promise.all([
           ApiKeyService.createApiKey({ projectId: project.id, name: null }),
-          ComputeProvider.createProject(project.id)
+          ComputeProvider.onProjectCreated(project.id)
         ]);
       }
     }

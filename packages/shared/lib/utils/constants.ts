@@ -1,26 +1,23 @@
+import { Template } from '@metallichq/types';
+
 export const PAGINATION_MIN_LIMIT = 1;
 export const PAGINATION_MAX_LIMIT = 100;
 export const PAGINATION_DEFAULT_LIMIT = 10;
 export const SESSION_COOKIE_KEY = 'metallic_session';
 export const DEFAULT_EMAIL_SUBSCRIPTIONS = ['billing', 'security', 'product'];
 export const DEFAULT_PROJECT_NAME = 'Default Project';
-export const DEFAULT_TEMPLATE_SLUG = 'base';
 export const DEFAULT_TTL_SECONDS = 300000; // 5 minutes
 export const DEFAULT_AUTO_DESTROY = false;
 
-// Regions
 export const DEFAULT_REGION = 'us-west-2';
 export const REGIONS = ['us-west-2', 'us-east-1', 'eu-central-1', 'ap-southeast-1'];
 
-// Storage
 export const MIN_STORAGE_GB = 1;
 export const MAX_STORAGE_GB = 500;
 
-// Memory
 export const MIN_MEMORY_MB_PER_SHARED_CPU = 256;
 export const MIN_MEMORY_MB_PER_CPU = 2048;
 
-// Instance types
 export const INSTANCE_TYPES: Record<
   string,
   {
@@ -77,3 +74,35 @@ export const INSTANCE_TYPES: Record<
 };
 
 export const DEFAULT_INSTANCE_TYPE = 'cpu-4x';
+
+export const DEFAULT_TEMPLATE_SLUG = 'base';
+export const INITIAL_TEMPLATES: Omit<Template, 'created_at' | 'updated_at' | 'deleted_at'>[] = [
+  {
+    slug: 'base',
+    name: 'Base',
+    description: `A minimal computer template Node.js, Python, and basic utilities pre-installed.`,
+    instance_type: 'cpu-2x',
+    storage_gb: 5,
+    image: 'metallichq/base:latest',
+    init: {
+      cmd: ['/bin/sh', '/usr/local/metallic/entrypoint.sh'],
+      entrypoint: []
+    },
+    is_public: true,
+    project_id: null
+  },
+  {
+    slug: 'browse',
+    name: 'Browse',
+    description: `Includes everything in the base template, plus a Chrome web browser.`,
+    instance_type: 'cpu-4x',
+    storage_gb: 10,
+    image: 'metallichq/browse:latest',
+    init: {
+      cmd: ['/bin/sh', '/usr/local/metallic/entrypoint.sh'],
+      entrypoint: []
+    },
+    is_public: true,
+    project_id: null
+  }
+];

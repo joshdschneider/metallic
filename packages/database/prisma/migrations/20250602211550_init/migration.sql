@@ -73,13 +73,14 @@ CREATE TABLE "ApiKey" (
 -- CreateTable
 CREATE TABLE "Template" (
     "slug" TEXT NOT NULL,
-    "project_id" TEXT NOT NULL,
+    "project_id" TEXT,
     "name" TEXT,
     "description" TEXT,
     "instance_type" TEXT NOT NULL,
     "storage_gb" INTEGER NOT NULL,
     "image" TEXT NOT NULL,
     "init" JSONB,
+    "is_public" BOOLEAN NOT NULL,
     "created_at" TEXT NOT NULL,
     "updated_at" TEXT NOT NULL,
     "deleted_at" TEXT
@@ -123,7 +124,7 @@ CREATE UNIQUE INDEX "OrganizationMembership_organization_id_user_id_key" ON "Org
 CREATE UNIQUE INDEX "ApiKey_key_hash_key" ON "ApiKey"("key_hash");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "Template_slug_project_id_key" ON "Template"("slug", "project_id");
+CREATE UNIQUE INDEX "Template_slug_key" ON "Template"("slug");
 
 -- AddForeignKey
 ALTER TABLE "OrganizationMembership" ADD CONSTRAINT "OrganizationMembership_organization_id_fkey" FOREIGN KEY ("organization_id") REFERENCES "Organization"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
@@ -138,10 +139,10 @@ ALTER TABLE "Project" ADD CONSTRAINT "Project_organization_id_fkey" FOREIGN KEY 
 ALTER TABLE "ApiKey" ADD CONSTRAINT "ApiKey_project_id_fkey" FOREIGN KEY ("project_id") REFERENCES "Project"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "Template" ADD CONSTRAINT "Template_project_id_fkey" FOREIGN KEY ("project_id") REFERENCES "Project"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "Template" ADD CONSTRAINT "Template_project_id_fkey" FOREIGN KEY ("project_id") REFERENCES "Project"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "Computer" ADD CONSTRAINT "Computer_project_id_fkey" FOREIGN KEY ("project_id") REFERENCES "Project"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "Computer" ADD CONSTRAINT "Computer_template_slug_project_id_fkey" FOREIGN KEY ("template_slug", "project_id") REFERENCES "Template"("slug", "project_id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "Computer" ADD CONSTRAINT "Computer_template_slug_fkey" FOREIGN KEY ("template_slug") REFERENCES "Template"("slug") ON DELETE RESTRICT ON UPDATE CASCADE;
