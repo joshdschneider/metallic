@@ -1,0 +1,33 @@
+{
+  "name": "metallichq",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "db:generate": "npm run generate -w @metallichq/database",
+    "db:migrate": "npm run migrate:dev -w @metallichq/database",
+    "build": "node scripts/build",
+    "build:db": "npm run build -w @metallichq/database",
+    "build:types": "npm run build -w @metallichq/types",
+    "build:shared": "npm run build -w @metallichq/shared",
+    "build:providers": "npm run build -w @metallichq/providers",
+    "build:server": "npm run build -w @metallichq/server",
+    "build:dashboard": "npm run build -w @metallichq/dashboard",
+    "watch": "node scripts/watch",
+    "dev:server": "npm run dev -w @metallichq/server",
+    "dev:dashboard": "npm run dev -w @metallichq/dashboard"
+  },
+  "devDependencies": {
+    "@tsconfig/strictest": "^2.0.5",
+    "@typescript-eslint/eslint-plugin": "^6.19.1",
+    "@typescript-eslint/parser": "^6.19.1",
+    "chalk": "^5.3.0",
+    "eslint": "^8.56.0",
+    "prettier-plugin-organize-imports": "^3.2.4",
+    "prettier-plugin-prisma": "^5.0.0"
+  }
+}

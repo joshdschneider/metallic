@@ -1,0 +1,23 @@
+{
+  "name": "@metallichq/database",
+  "version": "0.1.0",
+  "main": "dist/index.js",
+  "type": "module",
+  "scripts": {
+    "clean": "rimraf tsconfig.tsbuildinfo dist/*",
+    "build": "npm run clean && tsc",
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "generate": "npx prisma generate",
+    "migrate:dev": "dotenv -e ../../.env -- npx prisma migrate dev",
+    "watch": "nodemon"
+  },
+  "dependencies": {
+    "@prisma/client": "^5.11.0",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "dotenv-cli": "^7.4.2",
+    "prisma": "^5.11.0",
+    "rimraf": "^5.0.5"
+  }
+}

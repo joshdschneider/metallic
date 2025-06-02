@@ -1,0 +1,23 @@
+{
+  "name": "@metallichq/shared",
+  "version": "0.1.0",
+  "main": "dist/index.js",
+  "type": "module",
+  "scripts": {
+    "clean": "rimraf tsconfig.tsbuildinfo dist/*",
+    "build": "tsc",
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "watch": "nodemon"
+  },
+  "dependencies": {
+    "@metallichq/database": "file:../database",
+    "@workos-inc/node": "^7.45.0",
+    "axios": "^1.9.0",
+    "winston": "^3.15.0",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@metallichq/types": "file:../types",
+    "@types/node": "^22.7.5"
+  }
+}

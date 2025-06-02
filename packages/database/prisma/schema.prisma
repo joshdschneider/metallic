@@ -1,0 +1,122 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                  String   @id
+  workos_user_id      String   @unique
+  first_name          String?
+  last_name           String?
+  email               String   @unique
+  email_verified      Boolean  @default(false)
+  email_subscriptions String[]
+  profile_picture_url String?
+  created_at          String
+  updated_at          String
+  deleted_at          String?
+
+  organization_memberships OrganizationMembership[]
+}
+
+model Organization {
+  id                     String  @id
+  workos_organization_id String  @unique
+  name                   String?
+  created_at             String
+  updated_at             String
+  deleted_at             String?
+
+  memberships OrganizationMembership[]
+  projects    Project[]
+}
+
+model OrganizationMembership {
+  id                                String  @id
+  workos_organization_membership_id String  @unique
+  organization_id                   String
+  user_id                           String
+  role                              String
+  status                            String
+  created_at                        String
+  updated_at                        String
+  deleted_at                        String?
+
+  organization Organization @relation(fields: [organization_id], references: [id])
+  user         User         @relation(fields: [user_id], references: [id])
+
+  @@unique([organization_id, user_id])
+}
+
+model Project {
+  id              String  @id
+  organization_id String
+  name            String?
+  created_at      String
+  updated_at      String
+  deleted_at      String?
+
+  api_keys  ApiKey[]
+  computers Computer[]
+  templates Template[]
+
+  organization Organization @relation(fields: [organization_id], references: [id])
+}
+
+model ApiKey {
+  id         String  @id
+  project_id String
+  key        String
+  key_hash   String? @unique
+  key_iv     String?
+  key_tag    String?
+  name       String?
+  created_at String
+  updated_at String
+  deleted_at String?
+
+  project Project @relation(fields: [project_id], references: [id])
+}
+
+model Template {
+  slug          String
+  project_id    String
+  name          String?
+  description   String?
+  instance_type String
+  storage_gb    Int
+  image         String
+  init          Json?
+  created_at    String
+  updated_at    String
+  deleted_at    String?
+
+  computers Computer[]
+
+  project Project @relation(fields: [project_id], references: [id])
+
+  @@unique([slug, project_id])
+}
+
+model Computer {
+  id            String  @id
+  project_id    String
+  template_slug String
+  provider      String
+  provider_id   String
+  region        String
+  state         String
+  ttl_seconds   Int?
+  auto_destroy  Boolean
+  metadata      Json?
+  created_at    String
+  updated_at    String
+  deleted_at    String?
+
+  project  Project  @relation(fields: [project_id], references: [id])
+  template Template @relation(fields: [template_slug, project_id], references: [slug, project_id])
+}
