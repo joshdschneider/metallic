@@ -280,14 +280,10 @@ export default function ComputersPage() {
   );
 }
 
-const nodeCodeBlock = `import { Metallic } from 'metallic-sdk';
+const nodeCodeBlock = `import { Computer } from '@metallichq/sdk';
 
 async function main() {
-  // Initialize the SDK
-  const client = new Metallic()
-
-  // Create a new computer
-  const computer = await client.computers.create();
+  const computer = await Computer.create();
   console.log(computer.id);
 }
 
@@ -296,12 +292,8 @@ main().catch(console.error);`;
 const pythonCodeBlock = `from metallic_sdk import Metallic
 
 def main():
-  # Initialize the SDK
-  client = Metallic()
-
-  # Create a new computer
-  computer = client.computers.create()
-  print(computer.id)
+  computer = Computer.create(api_key="your-api-key")
+  print("Computer created! ID: " + computer.id)
 
 if __name__ == "__main__":
     main()`;
@@ -376,10 +368,10 @@ function CreateComputerDialog({ show, setShow }: CreateComputerDialogProps) {
               radius="large"
               highContrast
               onClick={() => {
-                window.open('https://metallic.dev/docs/quickstart', '_blank');
+                window.open('https://metallic.dev/docs/quick-start', '_blank');
               }}
             >
-              {`Quickstart guide`}
+              {`Quick start`}
               <ExternalLinkIcon />
             </Button>
             <Button

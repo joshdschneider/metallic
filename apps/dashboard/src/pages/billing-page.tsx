@@ -69,7 +69,7 @@ export default function BillingPage() {
                     variant="ghost"
                     onClick={() => {
                       const subject = `I'd like to upgrade my plan`;
-                      window.location.href = `mailto:billing@useembed.com?subject=${encodeURIComponent(subject)}`;
+                      window.location.href = `mailto:team@metallic.dev?subject=${encodeURIComponent(subject)}`;
                     }}
                   >
                     <RocketIcon />

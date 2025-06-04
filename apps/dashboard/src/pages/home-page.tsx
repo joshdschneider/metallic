@@ -91,7 +91,7 @@ export const HomePage: React.FC = () => {
                       mt="2"
                       highContrast
                       onClick={() => {
-                        window.open('https://metallic.dev/docs/quickstart', '_blank');
+                        window.open('https://metallic.dev/docs/quick-start', '_blank');
                       }}
                     >
                       Get started
@@ -119,7 +119,7 @@ export const HomePage: React.FC = () => {
                       mt="2"
                       highContrast
                       onClick={() => {
-                        window.open('https://metallic.dev/docs/templates', '_blank');
+                        window.open('https://metallic.dev/docs/advanced/templates', '_blank');
                       }}
                     >
                       Learn more
@@ -311,7 +311,7 @@ export const HomePage: React.FC = () => {
                           size="2"
                           highContrast
                           className="ExternalLink"
-                          href="https://metallic.dev/docs/quickstart"
+                          href="https://metallic.dev/docs/quick-start"
                           target="_blank"
                         >
                           <span
@@ -329,7 +329,7 @@ export const HomePage: React.FC = () => {
                           size="2"
                           highContrast
                           className="ExternalLink"
-                          href="https://metallic.dev/docs/templates"
+                          href="https://metallic.dev/docs/advanced/templates"
                           target="_blank"
                         >
                           <span
@@ -372,7 +372,7 @@ export const HomePage: React.FC = () => {
                     Documentation
                   </RadixLink>
                   <Text size="2" color="gray">
-                    Start integrating your agent with Metallic computers.
+                    Dive into the documentation to get started.
                   </Text>
                 </Flex>
               </Flex>
@@ -410,7 +410,7 @@ export const HomePage: React.FC = () => {
                     highContrast
                     underline="auto"
                     weight="medium"
-                    href="https://metallic.dev/docs/example-apps"
+                    href="https://metallic.dev/docs/examples/coding-agent"
                     target="_blank"
                   >
                     Example Apps
