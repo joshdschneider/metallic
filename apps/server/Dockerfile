@@ -1,5 +1,13 @@
 FROM node:20-bullseye AS builder
 
+# Install protoc (Protocol Buffer compiler)
+RUN apt-get update && apt-get install -y \
+    protobuf-compiler \
+    build-essential \
+    pkg-config \
+    python-is-python3 \
+    && rm -rf /var/lib/apt/lists/*
+
 # Set the working directory
 WORKDIR /app
 
