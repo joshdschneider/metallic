@@ -29,5 +29,6 @@ const EnvVarsSchema = z.object({
   FLY_API_TOKEN: z.string()
 });
 
-const configOutput = dotenv.config(process.env['NODE_ENV'] !== 'production' ? { path: '../../.env' } : undefined);
-export const envVars = EnvVarsSchema.parse(configOutput.parsed);
+export const envVars = EnvVarsSchema.parse(
+  process.env['NODE_ENV'] !== 'production' ? dotenv.config({ path: '../../.env' }).parsed : process.env
+);
