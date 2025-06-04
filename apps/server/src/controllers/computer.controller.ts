@@ -58,7 +58,9 @@ export const listComputers = async (req: Request, res: Response, next: NextFunct
       return {
         object: 'computer',
         id: computer.id,
-        template_slug: computer.template_slug,
+        project_id: computer.project_id,
+        template: computer.template_slug,
+        instance_id: computer.provider_id,
         region: computer.region,
         state: computer.state,
         ttl_seconds: computer.ttl_seconds,
@@ -118,8 +120,7 @@ const CreateComputerRequestSchema = z.object({
     ttl_seconds: z.number().nullable().optional(),
     auto_destroy: z.boolean().optional(),
     env: z.record(z.string(), z.string()).optional(),
-    metadata: z.record(z.string(), z.string()).optional(),
-    skip_launch: z.boolean().optional()
+    metadata: z.record(z.string(), z.string()).optional()
   })
 });
 
@@ -177,8 +178,7 @@ export const createComputer = async (req: Request, res: Response, next: NextFunc
       image: template.image,
       init: template.init ?? undefined,
       env: body.env,
-      metadata: body.metadata,
-      skip_launch: body.skip_launch
+      metadata: body.metadata
     });
 
     // Create computer
@@ -188,24 +188,27 @@ export const createComputer = async (req: Request, res: Response, next: NextFunc
       region: providerComputer.region,
       provider: providerComputer.provider,
       provider_id: providerComputer.id,
-      state: 'created',
+      state: 'starting',
       ttl_seconds: ttlSeconds,
       auto_destroy: autoDestroy,
       metadata: metadata ?? null
     });
 
-    if (!body.skip_launch) {
-      await ComputeProvider.startComputer({ project_id: projectId, id: computer.provider_id });
-      await ComputerService.updateComputer(computer.id, { state: 'starting' });
-      ComputerHook.syncState({ projectId, computerId: computer.id, expectedState: 'started' });
-    }
+    ComputerHook.syncState({
+      projectId,
+      computerId: computer.id,
+      providerId: providerComputer.id,
+      expectedState: 'started'
+    });
 
     logger.info(`Computer created! ID: ${computer.id}, State: ${computer.state}`);
 
     const computerObject: ComputerObject = {
       object: 'computer',
       id: computer.id,
-      template_slug: computer.template_slug,
+      project_id: computer.project_id,
+      template: computer.template_slug,
+      instance_id: computer.provider_id,
       region: computer.region,
       state: computer.state,
       ttl_seconds: computer.ttl_seconds,
@@ -248,7 +251,54 @@ export const retrieveComputer = async (req: Request, res: Response, next: NextFu
     const computerObject: ComputerObject = {
       object: 'computer',
       id: computer.id,
-      template_slug: computer.template_slug,
+      project_id: computer.project_id,
+      template: computer.template_slug,
+      instance_id: computer.provider_id,
+      state: computer.state,
+      region: computer.region,
+      ttl_seconds: computer.ttl_seconds,
+      auto_destroy: computer.auto_destroy,
+      metadata: computer.metadata,
+      created_at: computer.created_at,
+      updated_at: computer.updated_at
+    };
+
+    res.status(200).json(computerObject);
+  } catch (err) {
+    next(err);
+  }
+};
+
+const ConnectComputerRequestSchema = z.object({
+  method: z.literal('POST'),
+  locals: ResponseLocalsSchema,
+  params: z.object({ computer_id: z.string() })
+});
+
+export const connectComputer = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    const parsedReq = ConnectComputerRequestSchema.safeParse({
+      method: req.method,
+      locals: res.locals,
+      params: req.params
+    });
+
+    if (!parsedReq.success) {
+      throw HttpError.validation(parsedReq.error);
+    }
+
+    const { computer_id } = parsedReq.data.params;
+    const computer = await ComputerService.getComputerById(computer_id);
+    if (!computer) {
+      throw HttpError.notFound(`Computer not found with ID "${computer_id}"`);
+    }
+
+    const computerObject: ComputerObject = {
+      object: 'computer',
+      id: computer.id,
+      project_id: computer.project_id,
+      template: computer.template_slug,
+      instance_id: computer.provider_id,
       state: computer.state,
       region: computer.region,
       ttl_seconds: computer.ttl_seconds,
@@ -309,7 +359,9 @@ export const updateComputer = async (req: Request, res: Response, next: NextFunc
     const computerObject: ComputerObject = {
       object: 'computer',
       id: updatedComputer.id,
-      template_slug: updatedComputer.template_slug,
+      project_id: updatedComputer.project_id,
+      template: updatedComputer.template_slug,
+      instance_id: updatedComputer.provider_id,
       state: updatedComputer.state,
       region: updatedComputer.region,
       ttl_seconds: updatedComputer.ttl_seconds,
@@ -406,6 +458,7 @@ export const startComputer = async (req: Request, res: Response, next: NextFunct
     ComputerHook.syncState({
       projectId: computer.project_id,
       computerId: computer.id,
+      providerId: computer.provider_id,
       expectedState: 'started'
     });
 
@@ -414,7 +467,9 @@ export const startComputer = async (req: Request, res: Response, next: NextFunct
     const computerObject: ComputerObject = {
       object: 'computer',
       id: startedComputer.id,
-      template_slug: startedComputer.template_slug,
+      project_id: startedComputer.project_id,
+      template: startedComputer.template_slug,
+      instance_id: startedComputer.provider_id,
       state: startedComputer.state,
       region: startedComputer.region,
       ttl_seconds: startedComputer.ttl_seconds,
@@ -468,6 +523,7 @@ export const stopComputer = async (req: Request, res: Response, next: NextFuncti
     ComputerHook.syncState({
       projectId: computer.project_id,
       computerId: computer.id,
+      providerId: computer.provider_id,
       expectedState: 'stopped'
     });
 
@@ -476,7 +532,9 @@ export const stopComputer = async (req: Request, res: Response, next: NextFuncti
     const computerObject: ComputerObject = {
       object: 'computer',
       id: stoppedComputer.id,
-      template_slug: stoppedComputer.template_slug,
+      project_id: stoppedComputer.project_id,
+      template: stoppedComputer.template_slug,
+      instance_id: stoppedComputer.provider_id,
       state: stoppedComputer.state,
       region: stoppedComputer.region,
       ttl_seconds: stoppedComputer.ttl_seconds,
@@ -600,13 +658,16 @@ export const forkComputer = async (req: Request, res: Response, next: NextFuncti
     ComputerHook.syncState({
       projectId: computer.project_id,
       computerId: forkedComputer.id,
+      providerId: forkedProviderComputer.id,
       expectedState: 'started'
     });
 
     const computerObject: ComputerObject = {
       object: 'computer',
       id: forkedComputer.id,
-      template_slug: forkedComputer.template_slug,
+      project_id: forkedComputer.project_id,
+      template: forkedComputer.template_slug,
+      instance_id: forkedComputer.provider_id,
       state: forkedComputer.state,
       region: forkedComputer.region,
       ttl_seconds: forkedComputer.ttl_seconds,

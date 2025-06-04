@@ -206,7 +206,7 @@ export default function ComputersPage() {
                   </Table.Cell>
                   <Table.Cell>
                     <Code variant="ghost" color="gray">
-                      {computer.template_slug}
+                      {computer.template}
                     </Code>
                   </Table.Cell>
                   <Table.Cell>

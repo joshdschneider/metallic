@@ -67,8 +67,7 @@ export const createComputer = async (req: CreateComputerRequest): Promise<Create
       init: req.init,
       env: req.env,
       metadata: req.metadata
-    },
-    skip_launch: req.skip_launch
+    }
   });
 
   return {
@@ -145,9 +144,10 @@ export const restartComputer = async (req: RestartComputerRequest): Promise<void
 
 export const waitForState = async (req: WaitForStateRequest): Promise<void> => {
   const appName = FlyHelpers.projectIdToAppName(req.project_id);
+  const state = FlyHelpers.stateToFlyState(req.state);
 
   let instanceId: string | undefined;
-  if (['suspended', 'destroyed'].includes(req.state)) {
+  if (['suspended', 'destroyed'].includes(state)) {
     const machine = await FlyMachines.getMachine({
       app_name: appName,
       machine_id: req.id
@@ -160,7 +160,7 @@ export const waitForState = async (req: WaitForStateRequest): Promise<void> => {
     machine_id: req.id,
     instance_id: instanceId,
     timeout_sec: req.timeout_sec,
-    state: req.state
+    state
   });
 };
 

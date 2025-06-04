@@ -6,7 +6,7 @@ export const PAGINATION_DEFAULT_LIMIT = 10;
 export const SESSION_COOKIE_KEY = 'metallic_session';
 export const DEFAULT_EMAIL_SUBSCRIPTIONS = ['billing', 'security', 'product'];
 export const DEFAULT_PROJECT_NAME = 'Default Project';
-export const DEFAULT_TTL_SECONDS = 300000; // 5 minutes
+export const DEFAULT_TTL_SECONDS = 300; // 5 minutes
 export const DEFAULT_AUTO_DESTROY = false;
 
 export const DEFAULT_REGION = 'us-west-2';
@@ -85,22 +85,8 @@ export const INITIAL_TEMPLATES: Omit<Template, 'created_at' | 'updated_at' | 'de
     storage_gb: 5,
     image: 'metallichq/base:latest',
     init: {
-      cmd: ['/bin/sh', '/usr/local/metallic/entrypoint.sh'],
-      entrypoint: []
-    },
-    is_public: true,
-    project_id: null
-  },
-  {
-    slug: 'browse',
-    name: 'Browse',
-    description: `Includes everything in the base template, plus a Chrome web browser.`,
-    instance_type: 'cpu-4x',
-    storage_gb: 10,
-    image: 'metallichq/browse:latest',
-    init: {
-      cmd: ['/bin/sh', '/usr/local/metallic/entrypoint.sh'],
-      entrypoint: []
+      cmd: [],
+      entrypoint: ['/usr/local/metallic/entrypoint.sh']
     },
     is_public: true,
     project_id: null

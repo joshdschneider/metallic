@@ -16,15 +16,13 @@ interface CreateMachineRequest {
   region: string;
   config: MachineConfig;
   name?: string;
-  skip_launch?: boolean;
 }
 
 export const createMachine = async (req: CreateMachineRequest): Promise<Machine> => {
   const res = await api.post<Machine>(`/v1/apps/${req.app_name}/machines`, {
     region: req.region,
     config: req.config,
-    name: req.name,
-    skip_launch: req.skip_launch
+    name: req.name
   });
   return res.data;
 };

@@ -1,5 +1,6 @@
 import express from 'express';
 import {
+  connectComputer,
   countComputers,
   createComputer,
   destroyComputer,
@@ -22,6 +23,7 @@ computerRouter.route('/:computer_id').put(updateComputer);
 computerRouter.route('/:computer_id').delete(destroyComputer);
 computerRouter.route('/:computer_id/wait').get(waitForState);
 computerRouter.route('/:computer_id/start').post(startComputer);
+computerRouter.route('/:computer_id/connect').post(connectComputer);
 computerRouter.route('/:computer_id/stop').post(stopComputer);
 computerRouter.route('/:computer_id/fork').post(forkComputer);
 

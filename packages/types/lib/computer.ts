@@ -30,8 +30,10 @@ export const ComputerSchema = z.object({
 
 export type Computer = z.infer<typeof ComputerSchema>;
 
-export type ComputerObject = Omit<Computer, 'provider' | 'provider_id' | 'project_id' | 'deleted_at'> & {
+export type ComputerObject = Omit<Computer, 'provider' | 'provider_id' | 'template_slug' | 'deleted_at'> & {
   object: 'computer';
+  instance_id: string;
+  template: string;
 };
 
 export type ComputerDestroyedObject = {

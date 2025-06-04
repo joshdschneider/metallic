@@ -127,3 +127,11 @@ export function fullImageRef(imageRef: MachineImageRef): string {
 
   return imgStr;
 }
+
+export const stateToFlyState = (state: string): string => {
+  if (state === 'stopped') {
+    return 'suspended';
+  }
+
+  return state;
+};

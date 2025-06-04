@@ -14,7 +14,6 @@ export interface CreateComputerRequest {
   };
   env?: Record<string, string>;
   metadata?: Record<string, string>;
-  skip_launch?: boolean;
 }
 
 export interface CreateComputerResponse {
