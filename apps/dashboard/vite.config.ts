@@ -4,12 +4,15 @@ import { fileURLToPath } from 'node:url';
 import path from 'path';
 import { defineConfig } from 'vite';
 
-const dirName = path.dirname(fileURLToPath(import.meta.url));
-const envPath = path.resolve(dirName, '../../.env');
-dotenv.config({ path: envPath });
+if (process.env['NODE_ENV'] !== 'production') {
+  const dirName = path.dirname(fileURLToPath(import.meta.url));
+  const envPath = path.resolve(dirName, '../../.env');
+  dotenv.config({ path: envPath });
+}
 
 export default defineConfig({
   plugins: [react()],
-  server: { port: Number(process.env.DASHBOARD_PORT) || 4300 },
+  resolve: { preserveSymlinks: true },
+  server: { port: Number(process.env.DASHBOARD_PORT) || 3000 },
   define: { 'process.env': process.env }
 });
