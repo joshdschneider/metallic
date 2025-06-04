@@ -6,7 +6,10 @@ export const selectFlyRegion = async (opts: {
   region?: string;
   gpu_kind?: 'a10' | 'l40s' | 'a100-pcie-40gb' | 'a100-sxm4-80gb';
   cpu_kind?: 'shared' | 'performance';
-}): Promise<string> => {
+}): Promise<{
+  flyRegion: string;
+  metallicRegion: string;
+}> => {
   let candidateRegions: string[] = [];
 
   if (!opts.region && !opts.gpu_kind && !opts.cpu_kind) {
@@ -50,11 +53,22 @@ export const selectFlyRegion = async (opts: {
     throw HttpError.serviceUnavailable(`No compute capacity available`);
   }
 
-  // Sort by capacity (highest first) and return the best region
-  const bestRegion = capacityResults.sort((a, b) => b.capacity - a.capacity)[0]!;
-  return bestRegion.region;
+  const bestFlyRegion = capacityResults.sort((a, b) => b.capacity - a.capacity)[0]?.region;
+  if (!bestFlyRegion) {
+    throw new Error('Failed to return the best fly region');
+  }
+
+  const bestMetallicRegion = Object.entries(REGION_MAP).find(([_, flyRegions]) => {
+    return flyRegions.includes(bestFlyRegion);
+  })?.[0];
+  if (!bestMetallicRegion) {
+    throw new Error('Failed to return the best metallic region');
+  }
+
+  return { flyRegion: bestFlyRegion, metallicRegion: bestMetallicRegion };
 };
 
+// Metallic region -> Fly region
 const REGION_MAP: Record<string, string[]> = {
   'us-east-1': ['iad', 'ord'],
   'us-west-2': ['sjc', 'sea'],

@@ -32,7 +32,7 @@ export const createComputer = async (req: CreateComputerRequest): Promise<Create
     throw new Error('Failed to retrieve instance details');
   }
 
-  const region = await FlyHelpers.selectFlyRegion({
+  const { flyRegion, metallicRegion } = await FlyHelpers.selectFlyRegion({
     region: req.region,
     gpu_kind: instanceDetails.gpu_kind,
     cpu_kind: instanceDetails.cpu_kind
@@ -50,7 +50,7 @@ export const createComputer = async (req: CreateComputerRequest): Promise<Create
 
   const volume = await FlyVolumes.createVolume({
     app_name: appName,
-    region,
+    region: flyRegion,
     name: volumeName,
     size_gb: req.storage_gb,
     compute,
@@ -59,7 +59,7 @@ export const createComputer = async (req: CreateComputerRequest): Promise<Create
 
   const machine = await FlyMachines.createMachine({
     app_name: appName,
-    region,
+    region: flyRegion,
     config: {
       image: req.image,
       guest: compute,
@@ -73,7 +73,7 @@ export const createComputer = async (req: CreateComputerRequest): Promise<Create
   return {
     provider: Provider.Fly,
     id: machine.id,
-    region: machine.region,
+    region: metallicRegion,
     state: machine.state
   };
 };

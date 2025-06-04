@@ -269,51 +269,6 @@ export const retrieveComputer = async (req: Request, res: Response, next: NextFu
   }
 };
 
-const ConnectComputerRequestSchema = z.object({
-  method: z.literal('POST'),
-  locals: ResponseLocalsSchema,
-  params: z.object({ computer_id: z.string() })
-});
-
-export const connectComputer = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-  try {
-    const parsedReq = ConnectComputerRequestSchema.safeParse({
-      method: req.method,
-      locals: res.locals,
-      params: req.params
-    });
-
-    if (!parsedReq.success) {
-      throw HttpError.validation(parsedReq.error);
-    }
-
-    const { computer_id } = parsedReq.data.params;
-    const computer = await ComputerService.getComputerById(computer_id);
-    if (!computer) {
-      throw HttpError.notFound(`Computer not found with ID "${computer_id}"`);
-    }
-
-    const computerObject: ComputerObject = {
-      object: 'computer',
-      id: computer.id,
-      project_id: computer.project_id,
-      template: computer.template_slug,
-      instance_id: computer.provider_id,
-      state: computer.state,
-      region: computer.region,
-      ttl_seconds: computer.ttl_seconds,
-      auto_destroy: computer.auto_destroy,
-      metadata: computer.metadata,
-      created_at: computer.created_at,
-      updated_at: computer.updated_at
-    };
-
-    res.status(200).json(computerObject);
-  } catch (err) {
-    next(err);
-  }
-};
-
 const UpdateComputerRequestSchema = z.object({
   method: z.literal('PUT'),
   locals: ResponseLocalsSchema,
@@ -415,6 +370,73 @@ export const destroyComputer = async (req: Request, res: Response, next: NextFun
     };
 
     res.status(200).json(computerDestroyedObject);
+  } catch (err) {
+    next(err);
+  }
+};
+
+const ConnectComputerRequestSchema = z.object({
+  method: z.literal('POST'),
+  locals: ResponseLocalsSchema,
+  params: z.object({ computer_id: z.string() })
+});
+
+export const connectComputer = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    const parsedReq = ConnectComputerRequestSchema.safeParse({
+      method: req.method,
+      locals: res.locals,
+      params: req.params
+    });
+
+    if (!parsedReq.success) {
+      throw HttpError.validation(parsedReq.error);
+    }
+
+    const { computer_id } = parsedReq.data.params;
+    const computer = await ComputerService.getComputerById(computer_id);
+    if (!computer) {
+      throw HttpError.notFound(`Computer not found with ID "${computer_id}"`);
+    }
+
+    if (computer.state !== 'started') {
+      logger.info(`Starting computer...`);
+
+      await ComputeProvider.startComputer({
+        project_id: computer.project_id,
+        id: computer.provider_id
+      });
+
+      const startedComputer = await ComputerService.updateComputer(computer.id, {
+        state: 'starting'
+      });
+
+      ComputerHook.syncState({
+        projectId: computer.project_id,
+        computerId: computer.id,
+        providerId: computer.provider_id,
+        expectedState: 'started'
+      });
+
+      logger.info(`Start requested! ID: ${startedComputer.id}, State: ${startedComputer.state}`);
+    }
+
+    const computerObject: ComputerObject = {
+      object: 'computer',
+      id: computer.id,
+      project_id: computer.project_id,
+      template: computer.template_slug,
+      instance_id: computer.provider_id,
+      state: computer.state,
+      region: computer.region,
+      ttl_seconds: computer.ttl_seconds,
+      auto_destroy: computer.auto_destroy,
+      metadata: computer.metadata,
+      created_at: computer.created_at,
+      updated_at: computer.updated_at
+    };
+
+    res.status(200).json(computerObject);
   } catch (err) {
     next(err);
   }
