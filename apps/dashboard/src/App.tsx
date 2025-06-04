@@ -25,7 +25,7 @@ import { ToastProvider } from './providers/toast-provider';
 function App() {
   return (
     <ToastProvider>
-      <ThemeProvider attribute="class">
+      <ThemeProvider attribute="class" defaultTheme="dark">
         <Theme accentColor="blue" grayColor="sand">
           <BrowserRouter>
             <AuthProvider>
