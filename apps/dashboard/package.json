@@ -6,7 +6,7 @@
   "scripts": {
     "clean": "rimraf tsconfig.app.tsbuildinfo tsconfig.node.tsbuildinfo dist/*",
     "dev": "vite",
-    "build": "npm run clean && tsc -b && vite build",
+    "build": "tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview"
   },
