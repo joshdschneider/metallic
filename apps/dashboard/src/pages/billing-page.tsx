@@ -1,18 +1,16 @@
-import { ClockIcon, InfoCircledIcon, RocketIcon } from '@radix-ui/react-icons';
-import { Box, Button, Card, Flex, Grid, Heading, Tooltip as RadixTooltip, Text } from '@radix-ui/themes';
-import { useState } from 'react';
-import { Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
+import { ClockIcon, RocketIcon } from '@radix-ui/react-icons';
+import { Box, Button, Card, Flex, Grid, Heading, Text } from '@radix-ui/themes';
 import { CreditCardIcon } from '../components/custom-icons';
 import { Layout } from '../components/layout';
 
-const data = [
-  { name: 'Page A', uv: 400, pv: 2400, amt: 2400 },
-  { name: 'Page B', uv: 300, pv: 1398, amt: 2210 },
-  { name: 'Page C', uv: 200, pv: 9800, amt: 2290 },
-  { name: 'Page D', uv: 278, pv: 3908, amt: 2000 },
-  { name: 'Page E', uv: 189, pv: 4800, amt: 2181 },
-  { name: 'Page F', uv: 239, pv: 3800, amt: 2500 }
-];
+// const data = [
+//   { name: 'Page A', uv: 400, pv: 2400, amt: 2400 },
+//   { name: 'Page B', uv: 300, pv: 1398, amt: 2210 },
+//   { name: 'Page C', uv: 200, pv: 9800, amt: 2290 },
+//   { name: 'Page D', uv: 278, pv: 3908, amt: 2000 },
+//   { name: 'Page E', uv: 189, pv: 4800, amt: 2181 },
+//   { name: 'Page F', uv: 239, pv: 3800, amt: 2500 }
+// ];
 
 export interface PaymentMethodObject {
   object: 'payment_method';
@@ -29,22 +27,22 @@ export interface PaymentMethodObject {
 }
 
 export default function BillingPage() {
-  const [paymentMethod, setPaymentMethod] = useState<PaymentMethodObject | null>(null);
-  const [showPaymentMethodDialog, setShowPaymentMethodDialog] = useState(false);
+  // const [paymentMethod, setPaymentMethod] = useState<PaymentMethodObject | null>(null);
+  // const [showPaymentMethodDialog, setShowPaymentMethodDialog] = useState(false);
 
-  function getPaymentMethodDisplayName(paymentMethod: PaymentMethodObject) {
-    if (paymentMethod.type === 'card' && paymentMethod.card_last4) {
-      return `•••• ${paymentMethod.card_last4}`;
-    } else if (paymentMethod.type === 'link') {
-      if (paymentMethod.card_last4) {
-        return `•••• ${paymentMethod.card_last4}`;
-      } else {
-        return 'Link';
-      }
-    }
+  // function getPaymentMethodDisplayName(paymentMethod: PaymentMethodObject) {
+  //   if (paymentMethod.type === 'card' && paymentMethod.card_last4) {
+  //     return `•••• ${paymentMethod.card_last4}`;
+  //   } else if (paymentMethod.type === 'link') {
+  //     if (paymentMethod.card_last4) {
+  //       return `•••• ${paymentMethod.card_last4}`;
+  //     } else {
+  //       return 'Link';
+  //     }
+  //   }
 
-    return '—';
-  }
+  //   return '—';
+  // }
 
   return (
     <Layout>
@@ -108,13 +106,15 @@ export default function BillingPage() {
                     Payment method
                   </Text>
                   <Text size="4" weight="bold" as="p">
-                    {paymentMethod ? getPaymentMethodDisplayName(paymentMethod) : '—'}
+                    {/* {paymentMethod ? getPaymentMethodDisplayName(paymentMethod) : '—'} */}
+                    {'—'}
                   </Text>
                 </Box>
                 <Flex align="center">
-                  <Button variant="ghost" onClick={() => setShowPaymentMethodDialog(true)}>
+                  <Button variant="ghost" onClick={() => {}}>
                     <CreditCardIcon />
-                    {paymentMethod ? 'Update' : 'Add'} payment method
+                    {/* {paymentMethod ? 'Update' : 'Add'} payment method */}
+                    {'Add'} payment method
                   </Button>
                 </Flex>
               </Flex>
@@ -128,7 +128,7 @@ export default function BillingPage() {
             </Card>
           </Grid>
         </Flex>
-        <Flex align="center" justify="between" pt="5" mb="5" style={{ minHeight: 'var(--space-5)' }}>
+        {/* <Flex align="center" justify="between" pt="5" mb="5" style={{ minHeight: 'var(--space-5)' }}>
           <Heading as="h2" size="4" weight="medium">
             Current usage
           </Heading>
@@ -175,7 +175,7 @@ export default function BillingPage() {
               </Flex>
             </Flex>
           </Card>
-        </Grid>
+        </Grid> */}
       </Box>
     </Layout>
   );
