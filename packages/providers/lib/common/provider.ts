@@ -162,6 +162,10 @@ export const waitForState = async (req: WaitForStateRequest): Promise<void> => {
     timeout_sec: req.timeout_sec,
     state
   });
+
+  if (state === 'started') {
+    await FlyMachines.healthCheck({ app_name: appName, machine_id: req.id });
+  }
 };
 
 export const destroyComputer = async (req: DestroyComputerRequest): Promise<void> => {

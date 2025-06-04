@@ -1,3 +1,6 @@
+import * as grpc from '@grpc/grpc-js';
+import { DEFAULT_AGENT_PORT } from '@metallichq/shared';
+import { AgentClient } from '../generated/agent.js';
 import { api } from './api.js';
 import { Machine, MachineConfig } from './types.js';
 
@@ -92,4 +95,51 @@ export const waitForState = async (req: WaitForStateRequest): Promise<void> => {
   }
 
   await api.get(`/v1/apps/${req.app_name}/machines/${req.machine_id}/wait?${params.toString()}`);
+};
+
+interface HealthCheckRequest {
+  app_name: string;
+  machine_id: string;
+}
+
+const checkHealth = async (req: HealthCheckRequest): Promise<void> => {
+  const client = new AgentClient(
+    `${req.app_name}-${req.machine_id}-${DEFAULT_AGENT_PORT}.metallic.computer:443`,
+    grpc.credentials.createSsl()
+  );
+
+  return new Promise((resolve, reject) => {
+    client.healthCheck({}, (err, response) => {
+      if (err) {
+        reject(err);
+      } else if (!response.success) {
+        reject(new Error(response.error));
+      } else {
+        resolve();
+      }
+    });
+  });
+};
+
+export const healthCheck = async (req: HealthCheckRequest): Promise<void> => {
+  const timeout = 3000;
+  const interval = 100;
+  const maxAttempts = Math.ceil(timeout / interval);
+
+  let attempts = 0;
+  while (attempts < maxAttempts) {
+    try {
+      await checkHealth(req);
+      return;
+    } catch (error) {
+      attempts++;
+      if (attempts >= maxAttempts) {
+        throw new Error(`Machine health check failed after ${attempts} attempts (${timeout}ms)`);
+      }
+
+      await new Promise((resolve) => setTimeout(resolve, interval));
+    }
+  }
+
+  throw new Error(`Machine health check timed out after ${timeout}ms`);
 };

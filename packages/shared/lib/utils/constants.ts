@@ -8,6 +8,7 @@ export const DEFAULT_EMAIL_SUBSCRIPTIONS = ['billing', 'security', 'product'];
 export const DEFAULT_PROJECT_NAME = 'Default Project';
 export const DEFAULT_TTL_SECONDS = 300; // 5 minutes
 export const DEFAULT_AUTO_DESTROY = false;
+export const DEFAULT_AGENT_PORT = 50051;
 
 export const DEFAULT_REGION = 'us-west-2';
 export const REGIONS = ['us-west-2', 'us-east-1', 'eu-central-1', 'ap-southeast-1'];

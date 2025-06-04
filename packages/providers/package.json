@@ -5,19 +5,23 @@
   "main": "dist/index.js",
   "type": "module",
   "scripts": {
-    "clean": "rimraf tsconfig.tsbuildinfo dist/*",
-    "build": "npm run clean && tsc",
+    "clean": "rimraf tsconfig.tsbuildinfo dist/* lib/generated/*",
+    "generate": "protoc --plugin=protoc-gen-ts_proto=../../node_modules/.bin/protoc-gen-ts_proto --ts_proto_out=lib/generated --ts_proto_opt=outputServices=grpc-js,env=node -I=./proto proto/*.proto",
+    "build": "npm run clean && npm run generate && tsc",
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "npm run build && node dist/index.js",
     "dev": "nodemon"
   },
   "dependencies": {
+    "@grpc/grpc-js": "^1.13.1",
     "@metallichq/shared": "file:../packages/shared",
     "axios": "^1.8.4"
   },
   "devDependencies": {
+    "@grpc/proto-loader": "^0.7.13",
     "@metallichq/types": "file:../packages/types",
     "nodemon": "^3.1.0",
-    "rimraf": "^5.0.5"
+    "rimraf": "^5.0.5",
+    "ts-proto": "^2.6.1"
   }
 }
