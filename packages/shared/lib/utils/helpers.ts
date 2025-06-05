@@ -1,8 +1,8 @@
 import { User } from '@metallichq/types';
 import * as jose from 'jose';
 import { randomBytes } from 'node:crypto';
-import { envVars } from './env-vars';
-import { HttpError } from './error';
+import { envVars } from './env-vars.js';
+import { HttpError } from './error.js';
 
 export function now(): string {
   return new Date().toISOString();
