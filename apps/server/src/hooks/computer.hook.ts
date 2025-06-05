@@ -7,7 +7,7 @@ const logger = getLogger('ComputerHook');
 interface SyncStateRequest {
   projectId: string;
   computerId: string;
-  providerId: string;
+  providerComputerId: string;
   currentState: string;
   expectedState: string;
 }
@@ -23,7 +23,7 @@ export const syncState = async (req: SyncStateRequest) => {
       try {
         await ComputeProvider.waitForState({
           project_id: req.projectId,
-          id: req.providerId,
+          provider_computer_id: req.providerComputerId,
           timeout_sec: 60,
           state: req.expectedState
         });

@@ -17,7 +17,7 @@ const EnvVarsSchema = z.object({
   REDIS_URL: z.string(),
 
   // 256-bit encryption key
-  ENCRYPTION_KEY: z.string().optional(),
+  ENCRYPTION_KEY: z.string(),
 
   // WorkOS
   WORKOS_API_KEY: z.string().optional(),

@@ -101,7 +101,7 @@ export const getComputersByProjectId = async (
   return { computers, hasMore, cursorFirst, cursorLast };
 };
 
-export const createComputer = async (data: Omit<Computer, 'id' | 'deleted_at'>): Promise<Computer> => {
+export const createComputer = async (data: Omit<Computer, 'deleted_at'>): Promise<Computer> => {
   const computer = await database.computer.create({
     data: {
       ...data,

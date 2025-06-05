@@ -1,5 +1,8 @@
 import { User } from '@metallichq/types';
+import * as jose from 'jose';
 import { randomBytes } from 'node:crypto';
+import { envVars } from './env-vars';
+import { HttpError } from './error';
 
 export function now(): string {
   return new Date().toISOString();
@@ -43,4 +46,25 @@ export function generateId(resource?: Resource, byteLength = 8): string {
 
 export function inferOrganizationName(user: User) {
   return user.first_name ? `${user.first_name}'s Team` : undefined;
+}
+
+export async function generateAgentToken(computerId: string): Promise<string> {
+  return await new jose.SignJWT({ computer_id: computerId })
+    .setProtectedHeader({ alg: 'HS256' })
+    .setIssuedAt()
+    .setExpirationTime('30m')
+    .sign(new TextEncoder().encode(envVars.ENCRYPTION_KEY));
+}
+
+export async function verifyAgentToken(token: string): Promise<string> {
+  try {
+    const payload = await jose.jwtVerify<{
+      computer_id: string;
+    }>(token, new TextEncoder().encode(envVars.ENCRYPTION_KEY), {
+      algorithms: ['HS256']
+    });
+    return payload.payload['computer_id'];
+  } catch (err) {
+    throw HttpError.unauthorized('Invalid agent token');
+  }
 }

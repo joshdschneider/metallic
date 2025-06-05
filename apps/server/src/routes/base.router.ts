@@ -1,6 +1,7 @@
 import { HttpError } from '@metallichq/shared';
 import express from 'express';
 import helmet from 'helmet';
+import { heartbeat } from '../controllers/heartbeat.controller.js';
 import { errorMiddleware } from '../middleware/error.middleware.js';
 import { helmetOptions } from '../utils/helmet.js';
 import { apiV1Router } from './api-v1.router.js';
@@ -17,6 +18,9 @@ router.use(express.urlencoded({ extended: true }));
 router.get('/health', (_, res) => {
   res.status(200).json({ result: 'ok' });
 });
+
+// Computer heartbeat
+router.post('/heartbeat', heartbeat);
 
 // Routes
 router.use('/web', webRouter);

@@ -4,6 +4,7 @@ export enum Provider {
 
 export interface CreateComputerRequest {
   project_id: string;
+  computer_id: string;
   region?: string;
   instance_type: string;
   storage_gb: number;
@@ -17,14 +18,14 @@ export interface CreateComputerRequest {
 }
 
 export interface CreateComputerResponse {
-  id: string;
+  provider_computer_id: string;
   provider: string;
   state: string;
   region: string;
 }
 
 export interface ForkComputerResponse {
-  id: string;
+  provider_computer_id: string;
   provider: string;
   state: string;
   region: string;
@@ -32,13 +33,16 @@ export interface ForkComputerResponse {
 
 interface ProviderComputerIdentifier {
   project_id: string;
-  id: string;
+  provider_computer_id: string;
 }
 
 export type StartComputerRequest = ProviderComputerIdentifier;
 export type StopComputerRequest = ProviderComputerIdentifier;
-export type ForkComputerRequest = ProviderComputerIdentifier;
 export type RestartComputerRequest = ProviderComputerIdentifier;
+
+export type ForkComputerRequest = ProviderComputerIdentifier & {
+  computer_id: string;
+};
 
 export type WaitForStateRequest = ProviderComputerIdentifier & {
   timeout_sec: number;

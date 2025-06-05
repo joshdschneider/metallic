@@ -17,6 +17,7 @@ import * as FlyHelpers from '../fly/helpers.js';
 import * as FlyMachines from '../fly/machines.js';
 import { MachineGuest } from '../fly/types.js';
 import * as FlyVolumes from '../fly/volumes.js';
+import { createSystemEnv } from './env.js';
 
 export const onProjectCreated = async (projectId: string): Promise<void> => {
   await FlyApps.createApp({ app_name: FlyHelpers.projectIdToAppName(projectId) });
@@ -57,6 +58,11 @@ export const createComputer = async (req: CreateComputerRequest): Promise<Create
     compute_image: req.image
   });
 
+  const systemEnv = await createSystemEnv({
+    project_id: req.project_id,
+    computer_id: req.computer_id
+  });
+
   const machine = await FlyMachines.createMachine({
     app_name: appName,
     region: flyRegion,
@@ -65,14 +71,14 @@ export const createComputer = async (req: CreateComputerRequest): Promise<Create
       guest: compute,
       mounts: [{ volume: volume.id, path: VOLUME_PATH }],
       init: req.init,
-      env: req.env,
+      env: { ...req.env, ...systemEnv },
       metadata: req.metadata
     }
   });
 
   return {
     provider: Provider.Fly,
-    id: machine.id,
+    provider_computer_id: machine.id,
     region: metallicRegion,
     state: machine.state
   };
@@ -81,32 +87,31 @@ export const createComputer = async (req: CreateComputerRequest): Promise<Create
 export const startComputer = async (req: StartComputerRequest): Promise<void> => {
   await FlyMachines.startMachine({
     app_name: FlyHelpers.projectIdToAppName(req.project_id),
-    machine_id: req.id
+    machine_id: req.provider_computer_id
   });
 };
 
 export const stopComputer = async (req: StopComputerRequest): Promise<void> => {
   await FlyMachines.suspendMachine({
     app_name: FlyHelpers.projectIdToAppName(req.project_id),
-    machine_id: req.id
+    machine_id: req.provider_computer_id
   });
 };
 
 export const forkComputer = async (req: ForkComputerRequest): Promise<ForkComputerResponse> => {
   const appName = FlyHelpers.projectIdToAppName(req.project_id);
-
   const machine = await FlyMachines.getMachine({
     app_name: appName,
-    machine_id: req.id
+    machine_id: req.provider_computer_id
   });
 
   if (!machine) {
-    throw new Error(`Machine ${req.id} not found`);
+    throw new Error(`Machine ${req.provider_computer_id} not found`);
   }
 
   const mount = machine.config.mounts?.[0];
   if (!mount) {
-    throw new Error(`Machine ${req.id} has no mounted volume`);
+    throw new Error(`Machine ${req.provider_computer_id} has no mounted volume`);
   }
 
   const forkedVolume = await FlyVolumes.createVolume({
@@ -118,17 +123,23 @@ export const forkComputer = async (req: ForkComputerRequest): Promise<ForkComput
     region: machine.region
   });
 
+  const systemEnv = await createSystemEnv({
+    project_id: req.project_id,
+    computer_id: req.computer_id
+  });
+
   const forkedMachine = await FlyMachines.createMachine({
     app_name: appName,
     region: machine.region,
     config: {
       ...machine.config,
+      env: { ...machine.config.env, ...systemEnv },
       mounts: [{ volume: forkedVolume.id, path: VOLUME_PATH }]
     }
   });
 
   return {
-    id: forkedMachine.id,
+    provider_computer_id: forkedMachine.id,
     region: forkedMachine.region,
     state: forkedMachine.state,
     provider: Provider.Fly
@@ -138,7 +149,7 @@ export const forkComputer = async (req: ForkComputerRequest): Promise<ForkComput
 export const restartComputer = async (req: RestartComputerRequest): Promise<void> => {
   await FlyMachines.restartMachine({
     app_name: FlyHelpers.projectIdToAppName(req.project_id),
-    machine_id: req.id
+    machine_id: req.provider_computer_id
   });
 };
 
@@ -150,21 +161,21 @@ export const waitForState = async (req: WaitForStateRequest): Promise<void> => {
   if (['suspended', 'destroyed'].includes(state)) {
     const machine = await FlyMachines.getMachine({
       app_name: appName,
-      machine_id: req.id
+      machine_id: req.provider_computer_id
     });
     instanceId = machine.instance_id;
   }
 
   await FlyMachines.waitForState({
     app_name: appName,
-    machine_id: req.id,
+    machine_id: req.provider_computer_id,
     instance_id: instanceId,
     timeout_sec: req.timeout_sec,
     state
   });
 
   if (state === 'started') {
-    await FlyMachines.healthCheck({ app_name: appName, machine_id: req.id });
+    await FlyMachines.healthCheck({ app_name: appName, machine_id: req.provider_computer_id });
   }
 };
 
@@ -173,7 +184,7 @@ export const destroyComputer = async (req: DestroyComputerRequest): Promise<void
 
   const machine = await FlyMachines.getMachine({
     app_name: appName,
-    machine_id: req.id
+    machine_id: req.provider_computer_id
   });
 
   if (!machine) {
@@ -183,12 +194,12 @@ export const destroyComputer = async (req: DestroyComputerRequest): Promise<void
   const mounts = machine.config.mounts || [];
   await FlyMachines.destroyMachine({
     app_name: appName,
-    machine_id: req.id
+    machine_id: req.provider_computer_id
   });
 
   await FlyMachines.waitForState({
     app_name: appName,
-    machine_id: req.id,
+    machine_id: req.provider_computer_id,
     instance_id: machine.instance_id,
     state: 'destroyed'
   });
