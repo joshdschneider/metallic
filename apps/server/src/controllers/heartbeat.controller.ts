@@ -1,4 +1,4 @@
-import { ComputerService, HttpError, nowUnix, verifyAgentToken } from '@metallichq/shared';
+import { ComputerService, HttpError, nowUnix, verifyHeartbeatToken } from '@metallichq/shared';
 import { NextFunction, Request, Response } from 'express';
 
 export const heartbeat = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
@@ -8,12 +8,12 @@ export const heartbeat = async (req: Request, res: Response, next: NextFunction)
       throw HttpError.unauthorized('Authorization header missing');
     }
 
-    const agentToken = authHeader.split('Bearer ').pop();
-    if (!agentToken) {
+    const heartbeatToken = authHeader.split('Bearer ').pop();
+    if (!heartbeatToken) {
       throw HttpError.unauthorized('Malformed authorization header');
     }
 
-    const computerId = await verifyAgentToken(agentToken);
+    const computerId = await verifyHeartbeatToken(heartbeatToken);
     const computer = await ComputerService.getComputerById(computerId);
     if (!computer) {
       throw HttpError.notFound('Computer not found');

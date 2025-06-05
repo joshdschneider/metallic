@@ -48,7 +48,7 @@ export function inferOrganizationName(user: User) {
   return user.first_name ? `${user.first_name}'s Team` : undefined;
 }
 
-export async function generateAgentToken(computerId: string): Promise<string> {
+export async function generateHeartbeatToken(computerId: string): Promise<string> {
   return await new jose.SignJWT({ computer_id: computerId })
     .setProtectedHeader({ alg: 'HS256' })
     .setIssuedAt()
@@ -56,7 +56,7 @@ export async function generateAgentToken(computerId: string): Promise<string> {
     .sign(new TextEncoder().encode(envVars.ENCRYPTION_KEY));
 }
 
-export async function verifyAgentToken(token: string): Promise<string> {
+export async function verifyHeartbeatToken(token: string): Promise<string> {
   try {
     const payload = await jose.jwtVerify<{
       computer_id: string;

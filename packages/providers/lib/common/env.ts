@@ -1,4 +1,4 @@
-import { envVars, generateAgentToken } from '@metallichq/shared';
+import { envVars, generateHeartbeatToken } from '@metallichq/shared';
 
 export interface CreateSystemEnvRequest {
   project_id: string;
@@ -6,11 +6,11 @@ export interface CreateSystemEnvRequest {
 }
 
 export async function createSystemEnv(req: CreateSystemEnvRequest): Promise<Record<string, string>> {
-  const token = await generateAgentToken(req.computer_id);
+  const token = await generateHeartbeatToken(req.computer_id);
   return {
     METALLIC_PROJECT_ID: req.project_id,
     METALLIC_COMPUTER_ID: req.computer_id,
-    METALLIC_SERVER_URL: envVars.SERVER_URL,
-    METALLIC_AGENT_TOKEN: token
+    METALLIC_HEARTBEAT_URL: `${envVars.SERVER_URL}/heartbeat`,
+    METALLIC_HEARTBEAT_TOKEN: token
   };
 }
