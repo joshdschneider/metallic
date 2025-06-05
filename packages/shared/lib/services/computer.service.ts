@@ -1,8 +1,8 @@
 import { database, Prisma } from '@metallichq/database';
-import { Computer, ComputerSchema, ComputerState, PaginationParameters } from '@metallichq/types';
+import { Computer, ComputerEvent, ComputerSchema, ComputerState, PaginationParameters } from '@metallichq/types';
 import { z } from 'zod';
 import { PAGINATION_DEFAULT_LIMIT, PAGINATION_MAX_LIMIT, PAGINATION_MIN_LIMIT } from '../utils/constants.js';
-import { deleted, generateId, now, Resource } from '../utils/helpers.js';
+import { generateId, now, nowUnix, Resource } from '../utils/helpers.js';
 
 export const getComputerById = async (id: string): Promise<Computer | null> => {
   const computer = await database.computer.findUnique({
@@ -101,9 +101,7 @@ export const getComputersByProjectId = async (
   return { computers, hasMore, cursorFirst, cursorLast };
 };
 
-export const createComputer = async (
-  data: Omit<Computer, 'id' | 'created_at' | 'updated_at' | 'deleted_at'>
-): Promise<Computer> => {
+export const createComputer = async (data: Omit<Computer, 'id' | 'deleted_at'>): Promise<Computer> => {
   const computer = await database.computer.create({
     data: {
       ...data,
@@ -134,6 +132,28 @@ export const updateComputer = async (
 export const destroyComputer = async (computerId: string): Promise<void> => {
   await database.computer.update({
     where: { id: computerId, deleted_at: null },
-    data: { id: deleted(computerId), deleted_at: now() }
+    data: { id: computerId, deleted_at: now() }
+  });
+};
+
+export const createComputerEvent = async (data: Omit<ComputerEvent, 'id'>): Promise<void> => {
+  await database.computerEvent.create({
+    data: {
+      ...data,
+      id: generateId(Resource.ComputerEvent),
+      timestamp: nowUnix(),
+      metadata: data.metadata ?? undefined
+    }
+  });
+};
+
+export const createComputerEvents = async (events: Omit<ComputerEvent, 'id'>[]): Promise<void> => {
+  await database.computerEvent.createMany({
+    data: events.map((event) => ({
+      ...event,
+      id: generateId(Resource.ComputerEvent),
+      timestamp: nowUnix(),
+      metadata: event.metadata ?? undefined
+    }))
   });
 };

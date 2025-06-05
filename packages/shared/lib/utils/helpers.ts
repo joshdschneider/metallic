@@ -5,6 +5,14 @@ export function now(): string {
   return new Date().toISOString();
 }
 
+export function nowUnix(): number {
+  return Math.floor(Date.now() / 1000);
+}
+
+export function unixToISOString(unixSeconds: number): string {
+  return new Date(unixSeconds * 1000).toISOString();
+}
+
 export function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
@@ -24,6 +32,7 @@ export enum Resource {
   Project = 'proj',
   ApiKey = 'key',
   Computer = 'com',
+  ComputerEvent = 'cv',
   Template = 'temp'
 }
 

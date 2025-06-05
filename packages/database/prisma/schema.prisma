@@ -116,6 +116,18 @@ model Computer {
   updated_at    String
   deleted_at    String?
 
+  events ComputerEvent[]
+
   project  Project  @relation(fields: [project_id], references: [id])
   template Template @relation(fields: [template_slug], references: [slug])
+}
+
+model ComputerEvent {
+  id          String @id
+  computer_id String
+  type        String
+  timestamp   Int
+  metadata    Json?
+
+  computer Computer @relation(fields: [computer_id], references: [id])
 }

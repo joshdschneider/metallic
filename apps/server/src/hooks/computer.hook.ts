@@ -1,5 +1,5 @@
 import { ComputeProvider } from '@metallichq/providers';
-import { captureException, ComputerService, getLogger } from '@metallichq/shared';
+import { captureException, ComputerService, getLogger, nowUnix } from '@metallichq/shared';
 import { ComputerState } from '@metallichq/types';
 
 const logger = getLogger('ComputerHook');
@@ -8,6 +8,7 @@ interface SyncStateRequest {
   projectId: string;
   computerId: string;
   providerId: string;
+  currentState: string;
   expectedState: string;
 }
 
@@ -42,6 +43,13 @@ export const syncState = async (req: SyncStateRequest) => {
       { state: req.expectedState as ComputerState },
       { allowUpdateDeleted: true }
     );
+
+    await ComputerService.createComputerEvent({
+      computer_id: computer.id,
+      type: computer.state,
+      timestamp: nowUnix(),
+      metadata: null
+    });
 
     logger.info(`Computer state sync'd to "${computer.state}"`);
   } catch (err) {

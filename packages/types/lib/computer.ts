@@ -41,3 +41,26 @@ export type ComputerDestroyedObject = {
   id: string;
   destroyed: true;
 };
+
+export const ComputerEventTypeSchema = z.enum([
+  'created',
+  'starting',
+  'started',
+  'stopping',
+  'stopped',
+  'destroying',
+  'destroyed',
+  'heartbeat'
+]);
+
+export type ComputerEventType = z.infer<typeof ComputerEventTypeSchema>;
+
+export const ComputerEventSchema = z.object({
+  id: z.string(),
+  computer_id: z.string(),
+  type: ComputerEventTypeSchema,
+  timestamp: z.number(),
+  metadata: z.record(z.string(), z.any()).nullable()
+});
+
+export type ComputerEvent = z.infer<typeof ComputerEventSchema>;
