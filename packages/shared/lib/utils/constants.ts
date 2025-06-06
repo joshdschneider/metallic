@@ -84,7 +84,7 @@ export const INITIAL_TEMPLATES: Omit<Template, 'created_at' | 'updated_at' | 'de
     description: `A minimal computer template Node.js, Python, and basic utilities pre-installed.`,
     instance_type: 'cpu-2x',
     storage_gb: 5,
-    image: 'metallichq/base:1.1.0',
+    image: 'metallichq/base:1.2.0',
     init: {
       cmd: [],
       entrypoint: ['/usr/local/metallic/entrypoint.sh']
