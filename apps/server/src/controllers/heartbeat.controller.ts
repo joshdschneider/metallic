@@ -9,7 +9,7 @@ import {
 } from '@metallichq/shared';
 import { NextFunction, Request, Response } from 'express';
 import { z } from 'zod';
-import { ComputerHook } from '../hooks';
+import * as ComputerHook from '../hooks/computer.hook.js';
 
 export const HeartbeatRequestSchema = z.object({
   method: z.literal('POST'),
