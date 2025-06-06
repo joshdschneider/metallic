@@ -105,7 +105,6 @@ export const createComputer = async (data: Omit<Computer, 'deleted_at'>): Promis
   const computer = await database.computer.create({
     data: {
       ...data,
-      id: generateId(Resource.Computer),
       metadata: data.metadata ?? undefined,
       created_at: now(),
       updated_at: now(),

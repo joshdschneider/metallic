@@ -12,28 +12,34 @@ export const selectFlyRegion = async (opts: {
 }> => {
   let candidateRegions: string[] = [];
 
-  if (!opts.region && !opts.gpu_kind && !opts.cpu_kind) {
-    // If no constraints provided, check capacity for default region (us-west-2)
-    candidateRegions = REGION_MAP[DEFAULT_REGION] || [];
-  } else if (opts.gpu_kind && !opts.region) {
+  if (opts.gpu_kind && !opts.region) {
     // If gpu_kind is provided (with or without cpu_kind), use GPU-compatible regions
     candidateRegions = GPU_REGION_MAP[opts.gpu_kind] || [];
-  } else if (opts.cpu_kind && !opts.region && !opts.gpu_kind) {
-    // If only cpu_kind is provided, check all regions (CPUs are generally available everywhere)
-    candidateRegions = Object.values(REGION_MAP).flat();
+    if (candidateRegions.length === 0) {
+      throw HttpError.serviceUnavailable(`No compute capacity available for GPU ${opts.gpu_kind}`);
+    }
+  } else if (!opts.region && !opts.gpu_kind) {
+    // If no constraints provided, check capacity for default region (us-west-2)
+    candidateRegions = REGION_MAP[DEFAULT_REGION] || [];
+    if (candidateRegions.length === 0) {
+      throw HttpError.serviceUnavailable(`No compute capacity available`);
+    }
   } else if (opts.region && !opts.gpu_kind) {
     // If region is provided (with or without cpu_kind), use all locations in that region
     candidateRegions = REGION_MAP[opts.region] || [];
+    if (candidateRegions.length === 0) {
+      throw HttpError.serviceUnavailable(`No compute capacity available in region ${opts.region}`);
+    }
   } else if (opts.region && opts.gpu_kind) {
     // If both region and gpu_kind are provided, find the intersection
     const regionLocations = REGION_MAP[opts.region] || [];
     const gpuLocations = GPU_REGION_MAP[opts.gpu_kind] || [];
     candidateRegions = regionLocations.filter((loc) => gpuLocations.includes(loc));
-  }
-
-  // If no candidate regions found, throw an error
-  if (candidateRegions.length === 0) {
-    throw new Error('No candidate regions found');
+    if (candidateRegions.length === 0) {
+      throw HttpError.serviceUnavailable(
+        `No compute capacity available for GPU ${opts.gpu_kind} in region ${opts.region}`
+      );
+    }
   }
 
   // Build filters for capacity check
@@ -61,6 +67,7 @@ export const selectFlyRegion = async (opts: {
   const bestMetallicRegion = Object.entries(REGION_MAP).find(([_, flyRegions]) => {
     return flyRegions.includes(bestFlyRegion);
   })?.[0];
+
   if (!bestMetallicRegion) {
     throw new Error('Failed to return the best metallic region');
   }
