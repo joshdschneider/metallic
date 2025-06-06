@@ -60,7 +60,8 @@ export const createComputer = async (req: CreateComputerRequest): Promise<Create
 
   const systemEnv = await createSystemEnv({
     project_id: req.project_id,
-    computer_id: req.computer_id
+    computer_id: req.computer_id,
+    ttl_seconds: req.ttl_seconds
   });
 
   const machine = await FlyMachines.createMachine({
@@ -125,7 +126,8 @@ export const forkComputer = async (req: ForkComputerRequest): Promise<ForkComput
 
   const systemEnv = await createSystemEnv({
     project_id: req.project_id,
-    computer_id: req.computer_id
+    computer_id: req.computer_id,
+    ttl_seconds: req.ttl_seconds
   });
 
   const forkedMachine = await FlyMachines.createMachine({

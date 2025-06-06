@@ -8,6 +8,7 @@ export interface CreateComputerRequest {
   region?: string;
   instance_type: string;
   storage_gb: number;
+  ttl_seconds: number | null;
   image: string;
   init?: {
     cmd: string[];
@@ -42,6 +43,7 @@ export type RestartComputerRequest = ProviderComputerIdentifier;
 
 export type ForkComputerRequest = ProviderComputerIdentifier & {
   computer_id: string;
+  ttl_seconds: number | null;
 };
 
 export type WaitForStateRequest = ProviderComputerIdentifier & {

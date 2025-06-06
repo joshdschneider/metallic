@@ -181,6 +181,7 @@ export const createComputer = async (req: Request, res: Response, next: NextFunc
       instance_type: template.instance_type,
       storage_gb: template.storage_gb,
       region,
+      ttl_seconds: ttlSeconds,
       image: template.image,
       init: template.init ?? undefined,
       env: body.env,
@@ -724,7 +725,8 @@ export const forkComputer = async (req: Request, res: Response, next: NextFuncti
     const forkedProviderComputer = await ComputeProvider.forkComputer({
       project_id: computer.project_id,
       provider_computer_id: computer.provider_id,
-      computer_id: computerId
+      computer_id: computerId,
+      ttl_seconds: computer.ttl_seconds
     });
 
     const t1 = nowUnix();
