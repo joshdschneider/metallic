@@ -37,6 +37,15 @@ interface ProviderComputerIdentifier {
   provider_computer_id: string;
 }
 
+export type GetComputerRequest = ProviderComputerIdentifier;
+
+export interface GetComputerResponse {
+  provider_computer_id: string;
+  provider: string;
+  state: string;
+  region: string;
+}
+
 export type StartComputerRequest = ProviderComputerIdentifier;
 export type StopComputerRequest = ProviderComputerIdentifier;
 export type RestartComputerRequest = ProviderComputerIdentifier;

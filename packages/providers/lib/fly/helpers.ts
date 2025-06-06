@@ -149,3 +149,11 @@ export const stateToFlyState = (state: string): string => {
 
   return state;
 };
+
+export const flyStateToState = (state: string): string => {
+  if (state === 'suspended') {
+    return 'stopped';
+  }
+
+  return state;
+};

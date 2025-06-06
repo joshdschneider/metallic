@@ -81,7 +81,7 @@ export const createComputer = async (req: CreateComputerRequest): Promise<Create
     provider: Provider.Fly,
     provider_computer_id: machine.id,
     region: metallicRegion,
-    state: machine.state
+    state: FlyHelpers.flyStateToState(machine.state)
   };
 };
 
@@ -143,7 +143,7 @@ export const forkComputer = async (req: ForkComputerRequest): Promise<ForkComput
   return {
     provider_computer_id: forkedMachine.id,
     region: forkedMachine.region,
-    state: forkedMachine.state,
+    state: FlyHelpers.flyStateToState(forkedMachine.state),
     provider: Provider.Fly
   };
 };

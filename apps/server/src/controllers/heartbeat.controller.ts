@@ -46,6 +46,10 @@ export const heartbeat = async (req: Request, res: Response, next: NextFunction)
     }
 
     const { event } = parsedReq.data.body;
+    if (['sigint', 'sigterm', 'sigquit'].includes(event)) {
+      captureException(new Error(`Computer ${computer.id} received ${event} event`));
+    }
+
     if (event === 'heartbeat') {
       await ComputerService.createComputerEvent({
         computer_id: computer.id,
@@ -78,11 +82,34 @@ export const heartbeat = async (req: Request, res: Response, next: NextFunction)
         providerComputerId: computer.provider_id,
         currentState: 'stopping',
         expectedState: 'stopped'
-      });
-
-      if (['sigint', 'sigterm', 'sigquit'].includes(event)) {
-        captureException(new Error(`Computer ${computer.id} received ${event} event`));
-      }
+      })
+        .then(async () => {
+          if (computer.auto_destroy) {
+            const t1 = nowUnix();
+            await ComputerService.updateComputer(computer.id, {
+              state: 'destroying',
+              updated_at: unixToISOString(t1)
+            });
+            await ComputerService.createComputerEvent({
+              computer_id: computer.id,
+              type: 'destroying',
+              timestamp: t1,
+              metadata: null
+            });
+            await ComputeProvider.destroyComputer({
+              project_id: computer.project_id,
+              provider_computer_id: computer.provider_id
+            });
+            await ComputerHook.syncState({
+              projectId: computer.project_id,
+              computerId: computer.id,
+              providerComputerId: computer.provider_id,
+              currentState: 'destroying',
+              expectedState: 'destroyed'
+            });
+          }
+        })
+        .catch((err) => captureException(err));
     } else {
       throw new Error(`Invalid heartbeat event: ${event}`);
     }

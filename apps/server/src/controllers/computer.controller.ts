@@ -1,5 +1,6 @@
 import { ComputeProvider } from '@metallichq/providers';
 import {
+  captureException,
   ComputerService,
   DEFAULT_AUTO_DESTROY,
   DEFAULT_TEMPLATE_SLUG,
@@ -215,7 +216,7 @@ export const createComputer = async (req: Request, res: Response, next: NextFunc
       providerComputerId: providerComputer.provider_computer_id,
       currentState: 'starting',
       expectedState: 'started'
-    });
+    }).catch((err) => captureException(err));
 
     logger.info(`Computer created! ID: ${computer.id}, State: ${computer.state}`);
 
@@ -290,9 +291,7 @@ const UpdateComputerRequestSchema = z.object({
   locals: ResponseLocalsSchema,
   params: z.object({ computer_id: z.string() }),
   body: z.object({
-    ttl_seconds: z.number().nullable().optional(),
-    auto_destroy: z.boolean().optional(),
-    metadata: z.record(z.string(), z.string()).optional()
+    metadata: z.record(z.string(), z.string()).nullable().optional()
   })
 });
 
@@ -317,13 +316,8 @@ export const updateComputer = async (req: Request, res: Response, next: NextFunc
 
     logger.info(`Updating computer...`);
 
-    let { ttl_seconds: ttlSeconds, auto_destroy: autoDestroy, metadata } = parsedReq.data.body;
-
-    const updatedComputer = await ComputerService.updateComputer(computer_id, {
-      ttl_seconds: ttlSeconds ? validateTtlSeconds(ttlSeconds) : undefined,
-      auto_destroy: autoDestroy ?? computer.auto_destroy,
-      metadata: metadata || undefined
-    });
+    let { metadata } = parsedReq.data.body;
+    const updatedComputer = await ComputerService.updateComputer(computer_id, { metadata });
 
     logger.info(`Computer updated! ID: ${updatedComputer.id}, State: ${updatedComputer.state}`);
 
@@ -372,17 +366,35 @@ export const destroyComputer = async (req: Request, res: Response, next: NextFun
       throw HttpError.notFound(`Computer not found with ID "${computer_id}"`);
     }
 
+    const t0 = nowUnix();
     await ComputerService.createComputerEvent({
       computer_id: computer.id,
       type: 'destroying',
-      timestamp: nowUnix(),
+      timestamp: t0,
       metadata: null
     });
 
-    await ComputeProvider.destroyComputer({
+    await ComputerService.createComputerEvent({
+      computer_id: computer.id,
+      type: 'destroying',
+      timestamp: t0,
+      metadata: null
+    });
+
+    ComputeProvider.destroyComputer({
       project_id: computer.project_id,
       provider_computer_id: computer.provider_id
-    });
+    })
+      .then(async () => {
+        await ComputerHook.syncState({
+          projectId: computer.project_id,
+          computerId: computer.id,
+          providerComputerId: computer.provider_id,
+          currentState: 'destroying',
+          expectedState: 'destroyed'
+        });
+      })
+      .catch((err) => captureException(err));
 
     await ComputerService.createComputerEvent({
       computer_id: computer.id,
@@ -456,7 +468,7 @@ export const connectComputer = async (req: Request, res: Response, next: NextFun
         providerComputerId: computer.provider_id,
         currentState: 'starting',
         expectedState: 'started'
-      });
+      }).catch((err) => captureException(err));
 
       logger.info(`Start requested! ID: ${startedComputer.id}, State: ${startedComputer.state}`);
     }
@@ -532,7 +544,7 @@ export const startComputer = async (req: Request, res: Response, next: NextFunct
       providerComputerId: computer.provider_id,
       currentState: 'starting',
       expectedState: 'started'
-    });
+    }).catch((err) => captureException(err));
 
     logger.info(`Start requested! ID: ${startedComputer.id}, State: ${startedComputer.state}`);
 
@@ -589,7 +601,7 @@ export const stopComputer = async (req: Request, res: Response, next: NextFuncti
       provider_computer_id: computer.provider_id
     });
 
-    const stoppedComputer = await ComputerService.updateComputer(computer.id, {
+    const stoppingComputer = await ComputerService.updateComputer(computer.id, {
       state: 'stopping',
       updated_at: unixToISOString(t0)
     });
@@ -607,23 +619,53 @@ export const stopComputer = async (req: Request, res: Response, next: NextFuncti
       providerComputerId: computer.provider_id,
       currentState: 'stopping',
       expectedState: 'stopped'
-    });
+    })
+      .then(async () => {
+        if (computer.auto_destroy) {
+          const t1 = nowUnix();
+          await ComputerService.updateComputer(computer.id, {
+            state: 'destroying',
+            updated_at: unixToISOString(t1)
+          });
 
-    logger.info(`Stop requested! ID: ${stoppedComputer.id}, State: ${stoppedComputer.state}`);
+          await ComputerService.createComputerEvent({
+            computer_id: computer.id,
+            type: 'destroying',
+            timestamp: t1,
+            metadata: null
+          });
+
+          await ComputeProvider.destroyComputer({
+            project_id: computer.project_id,
+            provider_computer_id: computer.provider_id
+          });
+
+          await ComputerHook.syncState({
+            projectId: computer.project_id,
+            computerId: computer.id,
+            providerComputerId: computer.provider_id,
+            currentState: 'destroying',
+            expectedState: 'destroyed'
+          });
+        }
+      })
+      .catch((err) => captureException(err));
+
+    logger.info(`Stop requested! ID: ${stoppingComputer.id}, State: ${stoppingComputer.state}`);
 
     const computerObject: ComputerObject = {
       object: 'computer',
-      id: stoppedComputer.id,
-      project_id: stoppedComputer.project_id,
-      template: stoppedComputer.template_slug,
-      instance_id: stoppedComputer.provider_id,
-      state: stoppedComputer.state,
-      region: stoppedComputer.region,
-      ttl_seconds: stoppedComputer.ttl_seconds,
-      auto_destroy: stoppedComputer.auto_destroy,
-      metadata: stoppedComputer.metadata,
-      created_at: stoppedComputer.created_at,
-      updated_at: stoppedComputer.updated_at
+      id: stoppingComputer.id,
+      project_id: stoppingComputer.project_id,
+      template: stoppingComputer.template_slug,
+      instance_id: stoppingComputer.provider_id,
+      state: stoppingComputer.state,
+      region: stoppingComputer.region,
+      ttl_seconds: stoppingComputer.ttl_seconds,
+      auto_destroy: stoppingComputer.auto_destroy,
+      metadata: stoppingComputer.metadata,
+      created_at: stoppingComputer.created_at,
+      updated_at: stoppingComputer.updated_at
     };
 
     res.status(200).json(computerObject);
@@ -756,7 +798,7 @@ export const forkComputer = async (req: Request, res: Response, next: NextFuncti
       providerComputerId: forkedProviderComputer.provider_computer_id,
       currentState: 'starting',
       expectedState: 'started'
-    });
+    }).catch((err) => captureException(err));
 
     const computerObject: ComputerObject = {
       object: 'computer',
