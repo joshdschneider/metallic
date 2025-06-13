@@ -30,7 +30,10 @@ const EnvVarsSchema = z.object({
 
   // Stripe
   STRIPE_SECRET_KEY: z.string(),
-  STRIPE_WEBHOOK_SECRET: z.string()
+  STRIPE_WEBHOOK_SECRET: z.string(),
+
+  // Should seed Templates
+  SEED_TEMPLATES: z.boolean().default(false)
 });
 
 export const envVars = EnvVarsSchema.parse(
