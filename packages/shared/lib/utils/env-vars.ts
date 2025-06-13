@@ -33,7 +33,7 @@ const EnvVarsSchema = z.object({
   STRIPE_WEBHOOK_SECRET: z.string(),
 
   // Should seed Templates
-  SEED_TEMPLATES: z.boolean().default(false)
+  SEED_TEMPLATES: z.coerce.boolean().default(false)
 });
 
 export const envVars = EnvVarsSchema.parse(
