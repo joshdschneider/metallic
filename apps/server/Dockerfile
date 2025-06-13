@@ -16,6 +16,7 @@ COPY package*.json ./
 COPY tsconfig.base.json ./
 
 # Copy all packages
+COPY packages/database/ packages/database/
 COPY packages/types/ packages/types/
 COPY packages/shared/ packages/shared/
 COPY packages/control-plane/ packages/control-plane/
@@ -28,6 +29,7 @@ RUN npm ci
 RUN npm run db:generate
 
 # Build necessary packages
+RUN npm run build -w @metallichq/database
 RUN npm run build -w @metallichq/types
 RUN npm run build -w @metallichq/shared
 RUN npm run build -w @metallichq/control-plane
@@ -43,6 +45,7 @@ WORKDIR /app
 COPY --from=builder /app/node_modules ./node_modules
 
 # Copy the built files from the builder stage
+COPY --from=builder /app/packages/database ./packages/database
 COPY --from=builder /app/packages/types ./packages/types
 COPY --from=builder /app/packages/shared ./packages/shared
 COPY --from=builder /app/packages/control-plane ./packages/control-plane
