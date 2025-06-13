@@ -54,6 +54,24 @@ export const syncState = async (req: SyncStateRequest) => {
     timestamp: nowUnix(),
     metadata: null
   });
+
+  const dbSyncMaxAttempts = 100;
+  const dbSyncPollInterval = 500;
+
+  for (let attempt = 1; attempt <= dbSyncMaxAttempts; attempt++) {
+    const updatedComputer = await ComputerService.getComputerById(req.computerId, { includeDeleted: true });
+    if (updatedComputer && updatedComputer.state === req.expectedState) {
+      return;
+    }
+
+    if (attempt < dbSyncMaxAttempts) {
+      await new Promise((resolve) => setTimeout(resolve, dbSyncPollInterval));
+    }
+  }
+
+  throw new Error(
+    `Database state sync timeout in syncState for computer "${req.computerId}"; Expected "${req.expectedState}"`
+  );
 };
 
 interface ReportUsageRequest {
@@ -330,11 +348,11 @@ export const waitForState = async (req: WaitForStateRequest): Promise<void> => {
     state: req.state
   });
 
-  const maxAttempts = 5;
+  const maxAttempts = 120;
   const pollInterval = 500;
 
   for (let attempt = 1; attempt <= maxAttempts; attempt++) {
-    const computer = await ComputerService.getComputerById(req.computerId);
+    const computer = await ComputerService.getComputerById(req.computerId, { includeDeleted: true });
     if (computer && computer.state === req.state) {
       return;
     }
@@ -344,7 +362,9 @@ export const waitForState = async (req: WaitForStateRequest): Promise<void> => {
     }
   }
 
-  throw new Error(`Database state sync timeout for computer "${req.computerId}"; Expected "${req.state}"`);
+  throw new Error(
+    `Database state sync timeout in waitForState for computer "${req.computerId}"; Expected "${req.state}"`
+  );
 };
 
 interface ForkComputerRequest {

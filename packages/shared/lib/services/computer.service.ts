@@ -15,9 +15,9 @@ import { z } from 'zod';
 import { PAGINATION_DEFAULT_LIMIT, PAGINATION_MAX_LIMIT, PAGINATION_MIN_LIMIT } from '../utils/constants.js';
 import { generateId, now, nowUnix, Resource } from '../utils/helpers.js';
 
-export const getComputerById = async (id: string): Promise<Computer | null> => {
+export const getComputerById = async (id: string, options?: { includeDeleted?: boolean }): Promise<Computer | null> => {
   const computer = await database.computer.findUnique({
-    where: { id, deleted_at: null }
+    where: { id, deleted_at: options?.includeDeleted ? undefined : null }
   });
 
   if (!computer) {
