@@ -11,6 +11,7 @@ import BillingPage from './pages/billing-page';
 import ComputersPage from './pages/computers-page';
 import { HomePage } from './pages/home-page';
 import { NotFoundPage } from './pages/not-found-page';
+import PlansPage from './pages/plans-page';
 import { ProfilePage } from './pages/profile-page';
 import ProjectPage from './pages/project-page';
 import { SignInPage } from './pages/sign-in-page';
@@ -45,6 +46,7 @@ function App() {
                         <Route path="/project" element={<ProjectPage />} />
                         <Route path="/team" element={<TeamPage />} />
                         <Route path="/billing" element={<BillingPage />} />
+                        <Route path="/billing/plans" element={<PlansPage />} />
                       </Route>
                       <Route path="*" element={<NotFoundPage />} />
                     </Routes>

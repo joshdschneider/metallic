@@ -1,9 +1,16 @@
-import { OrganizationMembershipSchema, OrganizationSchema, ProjectSchema, UserSchema } from '@metallichq/types';
+import {
+  OrganizationMembershipSchema,
+  OrganizationSchema,
+  ProjectSchema,
+  SubscriptionSchema,
+  UserSchema
+} from '@metallichq/types';
 import { z } from 'zod';
 
 export const ApiKeyAuthResponseLocalsSchema = z.object({
   auth_method: z.literal('api_key'),
   organization: OrganizationSchema,
+  subscriptions: z.array(SubscriptionSchema),
   project: ProjectSchema
 });
 
@@ -14,6 +21,7 @@ export const SessionAuthResponseLocalsSchema = z.object({
   user: UserSchema,
   organization: OrganizationSchema,
   organization_membership: OrganizationMembershipSchema,
+  subscriptions: z.array(SubscriptionSchema),
   project: ProjectSchema.nullable().optional()
 });
 

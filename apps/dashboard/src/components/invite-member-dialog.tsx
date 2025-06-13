@@ -1,5 +1,6 @@
 import { InvitationObject } from '@metallichq/types';
 import { Button, Dialog, Flex, Heading, RadioGroup, Text, TextField, VisuallyHidden } from '@radix-ui/themes';
+import { AxiosError } from 'axios';
 import { Dispatch, SetStateAction, useState } from 'react';
 import { useOrganizations } from '../hooks/use-organizations';
 import { useToast } from '../hooks/use-toast';
@@ -33,6 +34,11 @@ export const InviteMemberDialog: React.FC<InviteMemberDialogProps> = ({ open, se
       setOpen(false);
       toastSuccess('Invitation sent.');
     } catch (err) {
+      if (err instanceof AxiosError && err.response?.status === 402) {
+        toastError('Please upgrade your plan to add team members.');
+        return;
+      }
+
       captureException(err);
       toastError('Failed to send invite.');
     } finally {

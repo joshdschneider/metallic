@@ -11,8 +11,11 @@
   },
   "dependencies": {
     "@metallichq/database": "file:../database",
+    "@metallichq/providers": "file:../providers",
+    "@sentry/node": "^9.28.1",
     "@workos-inc/node": "^7.45.0",
     "axios": "^1.9.0",
+    "stripe": "^18.2.1",
     "winston": "^3.15.0",
     "zod": "^3.23.8"
   },

@@ -19,12 +19,20 @@ const packages = [
     dependencies: ['@metallichq/types', '@metallichq/shared']
   },
   {
+    name: '@metallichq/control-plane',
+    dependencies: ['@metallichq/types', '@metallichq/shared', '@metallichq/providers']
+  },
+  {
     name: '@metallichq/server',
     dependencies: ['@metallichq/database', '@metallichq/types', '@metallichq/shared', '@metallichq/providers']
   },
   {
     name: '@metallichq/dashboard',
     dependencies: ['@metallichq/types']
+  },
+  {
+    name: '@metallichq/billing-cron',
+    dependencies: ['@metallichq/types', '@metallichq/shared']
   }
 ];
 

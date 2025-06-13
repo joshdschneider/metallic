@@ -50,7 +50,10 @@ export type StartComputerRequest = ProviderComputerIdentifier;
 export type StopComputerRequest = ProviderComputerIdentifier;
 export type RestartComputerRequest = ProviderComputerIdentifier;
 
-export type ForkComputerRequest = ProviderComputerIdentifier & {
+export type ForkComputerRequest = {
+  project_id: string;
+  parent_provider_computer_id: string;
+  parent_computer_id: string;
   computer_id: string;
   ttl_seconds: number | null;
 };

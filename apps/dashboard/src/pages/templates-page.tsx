@@ -1,6 +1,5 @@
 import { TemplateObject } from '@metallichq/types';
 import {
-  ChevronRightIcon,
   ExclamationTriangleIcon,
   EyeClosedIcon,
   EyeOpenIcon,
@@ -8,7 +7,19 @@ import {
   MagnifyingGlassIcon,
   PlusIcon
 } from '@radix-ui/react-icons';
-import { Box, Button, Card, Code, Flex, Heading, Table, Text, TextField } from '@radix-ui/themes';
+import {
+  Box,
+  Button,
+  Card,
+  Code,
+  Dialog,
+  Flex,
+  Heading,
+  Table,
+  Text,
+  TextField,
+  VisuallyHidden
+} from '@radix-ui/themes';
 import { ChangeEvent, Fragment, useEffect, useState } from 'react';
 import { Layout } from '../components/layout';
 import { useProjects } from '../hooks/use-projects';
@@ -21,6 +32,7 @@ export default function TemplatesPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
+  const [showCreateTemplateDialog, setShowCreateTemplateDialog] = useState(false);
 
   useEffect(() => {
     let mounted = true;
@@ -132,13 +144,12 @@ export default function TemplatesPage() {
               <Table.ColumnHeaderCell>Storage</Table.ColumnHeaderCell>
               <Table.ColumnHeaderCell>Visibility</Table.ColumnHeaderCell>
               <Table.ColumnHeaderCell>Created At</Table.ColumnHeaderCell>
-              <Table.ColumnHeaderCell />
             </Table.Row>
           </Table.Header>
           <Table.Body>
             {templates.map((template) => {
               return (
-                <Table.Row key={template.slug} className="row-clickable row-va-middle">
+                <Table.Row key={template.slug} className="row-va-middle">
                   <Table.Cell>
                     <Flex align="center" justify="start" gap="2">
                       <Code variant="ghost" color="gray" highContrast>
@@ -183,9 +194,6 @@ export default function TemplatesPage() {
                       {new Date(template.created_at).toLocaleString()}
                     </Code>
                   </Table.Cell>
-                  <Table.Cell align="right">
-                    <ChevronRightIcon color="gray" />
-                  </Table.Cell>
                 </Table.Row>
               );
             })}
@@ -219,13 +227,66 @@ export default function TemplatesPage() {
                 </TextField.Slot>
               </TextField.Root>
             </Box>
-            <Button variant="solid" size="2" radius="large">
+            <Button variant="solid" size="2" radius="large" onClick={() => setShowCreateTemplateDialog(true)}>
               <PlusIcon /> Add template
             </Button>
           </Flex>
           <Box>{getTemplatesTable()}</Box>
         </Flex>
       </Box>
+      <CreateTemplateDialog show={showCreateTemplateDialog} setShow={setShowCreateTemplateDialog} />
     </Layout>
+  );
+}
+
+type CreateComputerDialogProps = {
+  show: boolean;
+  setShow: (show: boolean) => void;
+};
+
+function CreateTemplateDialog({ show, setShow }: CreateComputerDialogProps) {
+  return (
+    <Dialog.Root open={show} onOpenChange={() => setShow(false)}>
+      <VisuallyHidden>
+        <Dialog.Title>Create a computer</Dialog.Title>
+        <Dialog.Description>Install the SDK and spin up a new computer in a few lines.</Dialog.Description>
+      </VisuallyHidden>
+      <Dialog.Content style={{ maxWidth: '400px' }}>
+        <Flex direction="column" justify="start" gap="4" width="100%">
+          <Box>
+            <Heading as="h3" size="3" mb="2">
+              Templates are coming soon
+            </Heading>
+            <Text as="p" color="gray" size="2">
+              {`If you need a custom template now, please request it below.`}
+            </Text>
+          </Box>
+          <Flex justify="start" gap="4" mt="1">
+            <Button
+              variant="solid"
+              color="blue"
+              radius="large"
+              onClick={() => {
+                const subject = `Custom template request`;
+                window.location.href = `mailto:team@metallic.dev?subject=${encodeURIComponent(subject)}`;
+              }}
+            >
+              {`Request a template`}
+            </Button>
+            <Button
+              variant="soft"
+              color="gray"
+              radius="large"
+              highContrast
+              onClick={() => {
+                setShow(false);
+              }}
+            >
+              Cancel
+            </Button>
+          </Flex>
+        </Flex>
+      </Dialog.Content>
+    </Dialog.Root>
   );
 }

@@ -26,7 +26,11 @@ const EnvVarsSchema = z.object({
 
   // Fly
   FLY_API_HOSTNAME: z.string(),
-  FLY_API_TOKEN: z.string()
+  FLY_API_TOKEN: z.string(),
+
+  // Stripe
+  STRIPE_SECRET_KEY: z.string(),
+  STRIPE_WEBHOOK_SECRET: z.string()
 });
 
 export const envVars = EnvVarsSchema.parse(

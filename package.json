@@ -14,12 +14,15 @@
     "build:db": "npm run build -w @metallichq/database",
     "build:types": "npm run build -w @metallichq/types",
     "build:shared": "npm run build -w @metallichq/shared",
+    "build:control-plane": "npm run build -w @metallichq/control-plane",
     "build:providers": "npm run build -w @metallichq/providers",
     "build:server": "npm run build -w @metallichq/server",
     "build:dashboard": "npm run build -w @metallichq/dashboard",
+    "build:billing-cron": "npm run build -w @metallichq/billing-cron",
     "watch": "node scripts/watch",
     "dev:server": "npm run dev -w @metallichq/server",
-    "dev:dashboard": "npm run dev -w @metallichq/dashboard"
+    "dev:dashboard": "npm run dev -w @metallichq/dashboard",
+    "billing-cron": "npm run start -w @metallichq/billing-cron"
   },
   "devDependencies": {
     "@tsconfig/strictest": "^2.0.5",

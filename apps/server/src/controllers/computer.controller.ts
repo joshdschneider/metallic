@@ -1,32 +1,18 @@
-import { ComputeProvider } from '@metallichq/providers';
+import * as ControlPlane from '@metallichq/control-plane';
 import {
-  captureException,
   ComputerService,
   DEFAULT_AUTO_DESTROY,
   DEFAULT_TEMPLATE_SLUG,
-  generateId,
-  getLogger,
   HttpError,
-  nowUnix,
-  Resource,
-  TemplateService,
-  unixToISOString
+  PaywallClient,
+  TemplateService
 } from '@metallichq/shared';
-import {
-  ComputerDestroyedObject,
-  ComputerObject,
-  ComputerStateSchema,
-  PaginationParametersSchema,
-  Template
-} from '@metallichq/types';
+import { ComputerObject, ComputerStateSchema, PaginationParametersSchema, Template } from '@metallichq/types';
 import { NextFunction, Request, Response } from 'express';
 import { z } from 'zod';
-import { ComputerHook } from '../hooks/index.js';
 import { ResponseLocalsSchema } from '../utils/locals.js';
 import { getProjectIdFromLocals } from '../utils/project.js';
 import { validateRegion, validateTtlSeconds } from '../utils/validators.js';
-
-const logger = getLogger('ComputerController');
 
 const ListComputersRequestSchema = z.object({
   method: z.literal('GET'),
@@ -65,7 +51,8 @@ export const listComputers = async (req: Request, res: Response, next: NextFunct
         id: computer.id,
         project_id: computer.project_id,
         template: computer.template_slug,
-        instance_id: computer.provider_id,
+        instance_id: computer.provider_computer_id,
+        parent_computer_id: computer.parent_computer_id,
         region: computer.region,
         state: computer.state,
         ttl_seconds: computer.ttl_seconds,
@@ -110,6 +97,7 @@ export const countComputers = async (req: Request, res: Response, next: NextFunc
     }
 
     const count = await ComputerService.countComputersByProjectId(projectId);
+
     res.status(200).json({ count });
   } catch (err) {
     next(err);
@@ -141,12 +129,19 @@ export const createComputer = async (req: Request, res: Response, next: NextFunc
       throw HttpError.validation(parsedReq.error);
     }
 
+    const {
+      body,
+      locals: { organization, subscriptions }
+    } = parsedReq.data;
     const projectId = getProjectIdFromLocals(parsedReq.data.locals);
     if (!projectId) {
       throw HttpError.badRequest('Project not found');
     }
 
-    const { body } = parsedReq.data;
+    const paywallChecks = Promise.all([
+      PaywallClient.checkConcurrency({ subscriptions, organizationId: organization.id }),
+      PaywallClient.checkMonthlyUsage({ subscriptions, organizationId: organization.id })
+    ]);
 
     let template: Template;
     if (body.template) {
@@ -156,76 +151,43 @@ export const createComputer = async (req: Request, res: Response, next: NextFunc
       } else if (existingTemplate.project_id !== null && existingTemplate.project_id !== projectId) {
         throw HttpError.badRequest(`You do not have permission to use template "${body.template}"`);
       }
-
       template = existingTemplate;
     } else {
       const defaultTemplate = await TemplateService.getTemplateBySlug(DEFAULT_TEMPLATE_SLUG);
       if (!defaultTemplate) {
         throw new Error('Failed to retrieve default template');
       }
-
       template = defaultTemplate;
     }
+
+    PaywallClient.checkInstanceType({ subscriptions, instanceType: template.instance_type });
+    await paywallChecks;
 
     const region = validateRegion(body.region);
     const ttlSeconds = validateTtlSeconds(body.ttl_seconds);
     const autoDestroy = body.auto_destroy ?? DEFAULT_AUTO_DESTROY;
-    const metadata = body.metadata ?? null;
 
-    logger.info(`Creating computer...`);
-
-    const t0 = nowUnix();
-    const computerId = generateId(Resource.Computer);
-    const providerComputer = await ComputeProvider.createComputer({
-      project_id: projectId,
-      computer_id: computerId,
-      instance_type: template.instance_type,
-      storage_gb: template.storage_gb,
+    const computer = await ControlPlane.createComputer({
+      projectId,
+      templateSlug: template.slug,
+      instanceType: template.instance_type,
+      storageGb: template.storage_gb,
       region,
-      ttl_seconds: ttlSeconds,
+      ttlSeconds,
+      autoDestroy,
       image: template.image,
       init: template.init ?? undefined,
       env: body.env,
       metadata: body.metadata
     });
 
-    const t1 = nowUnix();
-    const computer = await ComputerService.createComputer({
-      id: computerId,
-      project_id: projectId,
-      template_slug: template.slug,
-      region: providerComputer.region,
-      provider: providerComputer.provider,
-      provider_id: providerComputer.provider_computer_id,
-      state: 'starting',
-      ttl_seconds: ttlSeconds,
-      auto_destroy: autoDestroy,
-      metadata: metadata ?? null,
-      created_at: unixToISOString(t0),
-      updated_at: unixToISOString(t1)
-    });
-
-    await ComputerService.createComputerEvents([
-      { computer_id: computer.id, type: 'created', timestamp: t0, metadata: null },
-      { computer_id: computer.id, type: 'starting', timestamp: t1, metadata: null }
-    ]);
-
-    ComputerHook.syncState({
-      projectId,
-      computerId: computer.id,
-      providerComputerId: providerComputer.provider_computer_id,
-      currentState: 'starting',
-      expectedState: 'started'
-    }).catch((err) => captureException(err));
-
-    logger.info(`Computer created! ID: ${computer.id}, State: ${computer.state}`);
-
     const computerObject: ComputerObject = {
       object: 'computer',
       id: computer.id,
       project_id: computer.project_id,
       template: computer.template_slug,
-      instance_id: computer.provider_id,
+      instance_id: computer.provider_computer_id,
+      parent_computer_id: computer.parent_computer_id,
       region: computer.region,
       state: computer.state,
       ttl_seconds: computer.ttl_seconds,
@@ -270,7 +232,8 @@ export const retrieveComputer = async (req: Request, res: Response, next: NextFu
       id: computer.id,
       project_id: computer.project_id,
       template: computer.template_slug,
-      instance_id: computer.provider_id,
+      instance_id: computer.provider_computer_id,
+      parent_computer_id: computer.parent_computer_id,
       state: computer.state,
       region: computer.region,
       ttl_seconds: computer.ttl_seconds,
@@ -314,19 +277,16 @@ export const updateComputer = async (req: Request, res: Response, next: NextFunc
       throw HttpError.notFound(`Computer not found with ID "${computer_id}"`);
     }
 
-    logger.info(`Updating computer...`);
-
     let { metadata } = parsedReq.data.body;
     const updatedComputer = await ComputerService.updateComputer(computer_id, { metadata });
-
-    logger.info(`Computer updated! ID: ${updatedComputer.id}, State: ${updatedComputer.state}`);
 
     const computerObject: ComputerObject = {
       object: 'computer',
       id: updatedComputer.id,
       project_id: updatedComputer.project_id,
       template: updatedComputer.template_slug,
-      instance_id: updatedComputer.provider_id,
+      instance_id: updatedComputer.provider_computer_id,
+      parent_computer_id: updatedComputer.parent_computer_id,
       state: updatedComputer.state,
       region: updatedComputer.region,
       ttl_seconds: updatedComputer.ttl_seconds,
@@ -360,58 +320,38 @@ export const destroyComputer = async (req: Request, res: Response, next: NextFun
       throw HttpError.validation(parsedReq.error);
     }
 
+    const { organization } = parsedReq.data.locals;
     const { computer_id } = parsedReq.data.params;
+
     const computer = await ComputerService.getComputerById(computer_id);
     if (!computer) {
       throw HttpError.notFound(`Computer not found with ID "${computer_id}"`);
     }
 
-    const t0 = nowUnix();
-    await ComputerService.createComputerEvent({
-      computer_id: computer.id,
-      type: 'destroying',
-      timestamp: t0,
-      metadata: null
+    const destroyingComputer = await ControlPlane.destroyComputer({
+      organizationId: organization.id,
+      projectId: computer.project_id,
+      computerId: computer.id,
+      providerComputerId: computer.provider_computer_id
     });
 
-    await ComputerService.createComputerEvent({
-      computer_id: computer.id,
-      type: 'destroying',
-      timestamp: t0,
-      metadata: null
-    });
-
-    ComputeProvider.destroyComputer({
-      project_id: computer.project_id,
-      provider_computer_id: computer.provider_id
-    })
-      .then(async () => {
-        await ComputerHook.syncState({
-          projectId: computer.project_id,
-          computerId: computer.id,
-          providerComputerId: computer.provider_id,
-          currentState: 'destroying',
-          expectedState: 'destroyed'
-        });
-      })
-      .catch((err) => captureException(err));
-
-    await ComputerService.createComputerEvent({
-      computer_id: computer.id,
-      type: 'destroyed',
-      timestamp: nowUnix(),
-      metadata: null
-    });
-
-    await ComputerService.destroyComputer(computer_id);
-
-    const computerDestroyedObject: ComputerDestroyedObject = {
+    const computerObject: ComputerObject = {
       object: 'computer',
-      id: computer.id,
-      destroyed: true
+      id: destroyingComputer.id,
+      project_id: destroyingComputer.project_id,
+      template: destroyingComputer.template_slug,
+      instance_id: destroyingComputer.provider_computer_id,
+      parent_computer_id: destroyingComputer.parent_computer_id,
+      state: destroyingComputer.state,
+      region: destroyingComputer.region,
+      ttl_seconds: destroyingComputer.ttl_seconds,
+      auto_destroy: destroyingComputer.auto_destroy,
+      metadata: destroyingComputer.metadata,
+      created_at: destroyingComputer.created_at,
+      updated_at: destroyingComputer.updated_at
     };
 
-    res.status(200).json(computerDestroyedObject);
+    res.status(200).json(computerObject);
   } catch (err) {
     next(err);
   }
@@ -441,36 +381,12 @@ export const connectComputer = async (req: Request, res: Response, next: NextFun
       throw HttpError.notFound(`Computer not found with ID "${computer_id}"`);
     }
 
-    if (computer.state !== 'started') {
-      logger.info(`Starting computer...`);
-
-      const t0 = nowUnix();
-      await ComputeProvider.startComputer({
-        project_id: computer.project_id,
-        provider_computer_id: computer.provider_id
-      });
-
-      const startedComputer = await ComputerService.updateComputer(computer.id, {
-        state: 'starting',
-        updated_at: unixToISOString(t0)
-      });
-
-      await ComputerService.createComputerEvent({
-        computer_id: computer.id,
-        type: 'starting',
-        timestamp: t0,
-        metadata: null
-      });
-
-      ComputerHook.syncState({
+    if (!['starting', 'started'].includes(computer.state)) {
+      await ControlPlane.startComputer({
         projectId: computer.project_id,
         computerId: computer.id,
-        providerComputerId: computer.provider_id,
-        currentState: 'starting',
-        expectedState: 'started'
-      }).catch((err) => captureException(err));
-
-      logger.info(`Start requested! ID: ${startedComputer.id}, State: ${startedComputer.state}`);
+        providerComputerId: computer.provider_computer_id
+      });
     }
 
     const computerObject: ComputerObject = {
@@ -478,7 +394,8 @@ export const connectComputer = async (req: Request, res: Response, next: NextFun
       id: computer.id,
       project_id: computer.project_id,
       template: computer.template_slug,
-      instance_id: computer.provider_id,
+      instance_id: computer.provider_computer_id,
+      parent_computer_id: computer.parent_computer_id,
       state: computer.state,
       region: computer.region,
       ttl_seconds: computer.ttl_seconds,
@@ -512,48 +429,35 @@ export const startComputer = async (req: Request, res: Response, next: NextFunct
       throw HttpError.validation(parsedReq.error);
     }
 
+    const {
+      locals: { organization, subscriptions }
+    } = parsedReq.data;
+
+    const paywallChecks = Promise.all([
+      PaywallClient.checkConcurrency({ subscriptions, organizationId: organization.id }),
+      PaywallClient.checkMonthlyUsage({ subscriptions, organizationId: organization.id })
+    ]);
+
     const { computer_id } = parsedReq.data.params;
     const computer = await ComputerService.getComputerById(computer_id);
     if (!computer) {
       throw HttpError.notFound(`Computer not found with ID "${computer_id}"`);
     }
 
-    logger.info(`Starting computer...`);
-
-    const t0 = nowUnix();
-    await ComputeProvider.startComputer({
-      project_id: computer.project_id,
-      provider_computer_id: computer.provider_id
-    });
-
-    const startedComputer = await ComputerService.updateComputer(computer.id, {
-      state: 'starting',
-      updated_at: unixToISOString(t0)
-    });
-
-    await ComputerService.createComputerEvent({
-      computer_id: computer.id,
-      type: 'starting',
-      timestamp: t0,
-      metadata: null
-    });
-
-    ComputerHook.syncState({
+    await paywallChecks;
+    const startedComputer = await ControlPlane.startComputer({
       projectId: computer.project_id,
       computerId: computer.id,
-      providerComputerId: computer.provider_id,
-      currentState: 'starting',
-      expectedState: 'started'
-    }).catch((err) => captureException(err));
-
-    logger.info(`Start requested! ID: ${startedComputer.id}, State: ${startedComputer.state}`);
+      providerComputerId: computer.provider_computer_id
+    });
 
     const computerObject: ComputerObject = {
       object: 'computer',
       id: startedComputer.id,
       project_id: startedComputer.project_id,
       template: startedComputer.template_slug,
-      instance_id: startedComputer.provider_id,
+      instance_id: startedComputer.provider_computer_id,
+      parent_computer_id: startedComputer.parent_computer_id,
       state: startedComputer.state,
       region: startedComputer.region,
       ttl_seconds: startedComputer.ttl_seconds,
@@ -587,78 +491,28 @@ export const stopComputer = async (req: Request, res: Response, next: NextFuncti
       throw HttpError.validation(parsedReq.error);
     }
 
+    const { organization } = parsedReq.data.locals;
     const { computer_id } = parsedReq.data.params;
+
     const computer = await ComputerService.getComputerById(computer_id);
     if (!computer) {
       throw HttpError.notFound(`Computer not found with ID "${computer_id}"`);
     }
 
-    logger.info(`Stopping computer...`);
-
-    const t0 = nowUnix();
-    await ComputeProvider.stopComputer({
-      project_id: computer.project_id,
-      provider_computer_id: computer.provider_id
-    });
-
-    const stoppingComputer = await ComputerService.updateComputer(computer.id, {
-      state: 'stopping',
-      updated_at: unixToISOString(t0)
-    });
-
-    await ComputerService.createComputerEvent({
-      computer_id: computer.id,
-      type: 'stopping',
-      timestamp: t0,
-      metadata: null
-    });
-
-    ComputerHook.syncState({
+    const stoppingComputer = await ControlPlane.stopComputer({
+      organizationId: organization.id,
       projectId: computer.project_id,
       computerId: computer.id,
-      providerComputerId: computer.provider_id,
-      currentState: 'stopping',
-      expectedState: 'stopped'
-    })
-      .then(async () => {
-        if (computer.auto_destroy) {
-          const t1 = nowUnix();
-          await ComputerService.updateComputer(computer.id, {
-            state: 'destroying',
-            updated_at: unixToISOString(t1)
-          });
-
-          await ComputerService.createComputerEvent({
-            computer_id: computer.id,
-            type: 'destroying',
-            timestamp: t1,
-            metadata: null
-          });
-
-          await ComputeProvider.destroyComputer({
-            project_id: computer.project_id,
-            provider_computer_id: computer.provider_id
-          });
-
-          await ComputerHook.syncState({
-            projectId: computer.project_id,
-            computerId: computer.id,
-            providerComputerId: computer.provider_id,
-            currentState: 'destroying',
-            expectedState: 'destroyed'
-          });
-        }
-      })
-      .catch((err) => captureException(err));
-
-    logger.info(`Stop requested! ID: ${stoppingComputer.id}, State: ${stoppingComputer.state}`);
+      providerComputerId: computer.provider_computer_id
+    });
 
     const computerObject: ComputerObject = {
       object: 'computer',
       id: stoppingComputer.id,
       project_id: stoppingComputer.project_id,
       template: stoppingComputer.template_slug,
-      instance_id: stoppingComputer.provider_id,
+      instance_id: stoppingComputer.provider_computer_id,
+      parent_computer_id: stoppingComputer.parent_computer_id,
       state: stoppingComputer.state,
       region: stoppingComputer.region,
       ttl_seconds: stoppingComputer.ttl_seconds,
@@ -724,10 +578,11 @@ export const waitForState = async (req: Request, res: Response, next: NextFuncti
       throw HttpError.badRequest('Timeout must be greater than 0 seconds');
     }
 
-    await ComputeProvider.waitForState({
-      project_id: computer.project_id,
-      provider_computer_id: computer.provider_id,
-      timeout_sec: validTimeoutSec,
+    await ControlPlane.waitForState({
+      projectId: computer.project_id,
+      computerId: computer.id,
+      providerComputerId: computer.provider_computer_id,
+      timeoutSec: validTimeoutSec,
       state
     });
 
@@ -755,57 +610,36 @@ export const forkComputer = async (req: Request, res: Response, next: NextFuncti
       throw HttpError.validation(parsedReq.error);
     }
 
+    const { organization, subscriptions } = parsedReq.data.locals;
+    const paywallChecks = Promise.all([
+      PaywallClient.checkConcurrency({ subscriptions, organizationId: organization.id }),
+      PaywallClient.checkMonthlyUsage({ subscriptions, organizationId: organization.id })
+    ]);
+
     const { computer_id } = parsedReq.data.params;
     const computer = await ComputerService.getComputerById(computer_id);
-
     if (!computer) {
       throw HttpError.notFound(`Computer not found with ID "${computer_id}"`);
     }
 
-    const t0 = nowUnix();
-    const computerId = generateId(Resource.Computer);
-    const forkedProviderComputer = await ComputeProvider.forkComputer({
-      project_id: computer.project_id,
-      provider_computer_id: computer.provider_id,
-      computer_id: computerId,
-      ttl_seconds: computer.ttl_seconds
-    });
-
-    const t1 = nowUnix();
-    const forkedComputer = await ComputerService.createComputer({
-      id: computerId,
-      project_id: computer.project_id,
-      template_slug: computer.template_slug,
-      provider: forkedProviderComputer.provider,
-      provider_id: forkedProviderComputer.provider_computer_id,
-      region: forkedProviderComputer.region,
-      state: 'starting',
-      ttl_seconds: computer.ttl_seconds,
-      auto_destroy: computer.auto_destroy,
-      metadata: computer.metadata,
-      created_at: unixToISOString(t0),
-      updated_at: unixToISOString(t1)
-    });
-
-    await ComputerService.createComputerEvents([
-      { computer_id: forkedComputer.id, type: 'created', timestamp: t0, metadata: null },
-      { computer_id: forkedComputer.id, type: 'starting', timestamp: t1, metadata: null }
-    ]);
-
-    ComputerHook.syncState({
+    await paywallChecks;
+    const forkedComputer = await ControlPlane.forkComputer({
       projectId: computer.project_id,
-      computerId: forkedComputer.id,
-      providerComputerId: forkedProviderComputer.provider_computer_id,
-      currentState: 'starting',
-      expectedState: 'started'
-    }).catch((err) => captureException(err));
+      parentComputerId: computer.id,
+      parentProviderComputerId: computer.provider_computer_id,
+      templateSlug: computer.template_slug,
+      ttlSeconds: computer.ttl_seconds,
+      autoDestroy: computer.auto_destroy,
+      metadata: computer.metadata
+    });
 
     const computerObject: ComputerObject = {
       object: 'computer',
       id: forkedComputer.id,
       project_id: forkedComputer.project_id,
       template: forkedComputer.template_slug,
-      instance_id: forkedComputer.provider_id,
+      instance_id: forkedComputer.provider_computer_id,
+      parent_computer_id: forkedComputer.parent_computer_id,
       state: forkedComputer.state,
       region: forkedComputer.region,
       ttl_seconds: forkedComputer.ttl_seconds,

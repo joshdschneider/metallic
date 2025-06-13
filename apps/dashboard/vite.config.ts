@@ -1,3 +1,4 @@
+import { sentryVitePlugin } from '@sentry/vite-plugin';
 import react from '@vitejs/plugin-react';
 import dotenv from 'dotenv';
 import { fileURLToPath } from 'node:url';
@@ -11,7 +12,14 @@ if (process.env['NODE_ENV'] !== 'production') {
 }
 
 export default defineConfig({
-  plugins: [react()],
   server: { port: Number(process.env.DASHBOARD_PORT) || 3000 },
-  define: { 'process.env': process.env }
+  define: { 'process.env': process.env },
+  plugins: [
+    react(),
+    sentryVitePlugin({
+      org: 'metallic',
+      project: 'metallic-dashboard',
+      authToken: process.env.SENTRY_AUTH_TOKEN
+    })
+  ]
 });

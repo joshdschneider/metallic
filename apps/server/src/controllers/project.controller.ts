@@ -1,4 +1,4 @@
-import { ComputeProvider } from '@metallichq/providers';
+import * as ControlPlane from '@metallichq/control-plane';
 import {
   ApiKeyService,
   DEFAULT_PROJECT_NAME,
@@ -129,7 +129,7 @@ export const createProject = async (req: Request, res: Response, next: NextFunct
       name: name ?? DEFAULT_PROJECT_NAME
     });
 
-    await ComputeProvider.onProjectCreated(project.id);
+    await ControlPlane.onProjectCreated(project.id);
     await ApiKeyService.createApiKey({ projectId: project.id, name: null });
 
     const projectObject: ProjectObject = {
@@ -221,7 +221,7 @@ export const deleteProject = async (req: Request, res: Response, next: NextFunct
     }
 
     await ProjectService.deleteProject(project_id);
-    await ComputeProvider.onProjectDeleted(project_id);
+    await ControlPlane.onProjectDeleted(project_id);
 
     const projectDeletedObject: ProjectDeletedObject = {
       object: 'project',

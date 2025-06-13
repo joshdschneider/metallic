@@ -1,8 +1,13 @@
+import * as Sentry from '@sentry/node';
 import { z } from 'zod';
+import { envVars } from './env-vars.js';
 
 export const captureException = (e: unknown): void => {
-  // todo: report to sentry
-  console.dir(e, { depth: null });
+  if (envVars.NODE_ENV === 'production') {
+    Sentry.captureException(e);
+  } else {
+    console.error(e);
+  }
 };
 
 enum HttpStatusCode {
@@ -12,6 +17,7 @@ enum HttpStatusCode {
   BadRequest = 400,
   Conflict = 409,
   Unauthorized = 401,
+  PaymentRequired = 402,
   Forbidden = 403,
   NotFound = 404,
   Timeout = 408,
@@ -53,6 +59,10 @@ export class HttpError extends Error {
 
   static unauthorized(message: string): HttpError {
     return new HttpError({ name: 'UnauthorizedError', message, statusCode: HttpStatusCode.Unauthorized });
+  }
+
+  static paymentRequired(message: string): HttpError {
+    return new HttpError({ name: 'PaymentRequiredError', message, statusCode: HttpStatusCode.PaymentRequired });
   }
 
   static forbidden(message: string): HttpError {

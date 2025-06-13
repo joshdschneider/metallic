@@ -64,7 +64,8 @@ export const createOrganization = async (req: Request, res: Response, next: Next
     const workosOrg = await WorkOSClient.createOrganization(name);
     const organization = await OrganizationService.createOrganization({
       name,
-      workos_organization_id: workosOrg.id
+      workos_organization_id: workosOrg.id,
+      stripe_customer_id: null
     });
 
     const workosOrgMembership = await WorkOSClient.createOrganizationMembership({

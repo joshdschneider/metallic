@@ -1,6 +1,8 @@
-import { CubeIcon, DashboardIcon, ExternalLinkIcon, LayersIcon, ReaderIcon } from '@radix-ui/react-icons';
-import { Button, Flex, Link as RadixLink, ScrollArea, Text } from '@radix-ui/themes';
-import { Link, useLocation } from 'react-router-dom';
+import { CubeIcon, DashboardIcon, ExternalLinkIcon, LayersIcon, ReaderIcon, RocketIcon } from '@radix-ui/react-icons';
+import { Button, Flex, Link as RadixLink, ScrollArea, Separator, Text } from '@radix-ui/themes';
+import { Fragment } from 'react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { useSubscriptions } from '../hooks/use-subscriptions';
 import { CreditCardIcon, FolderIcon, GithubIcon, KeyIcon, PeopleIcon, SidePanelIcon } from './custom-icons';
 
 interface SidebarProps {
@@ -10,9 +12,19 @@ interface SidebarProps {
 
 export function Sidebar({ isCollapsed, setIsCollapsed }: SidebarProps) {
   const location = useLocation();
+  const { plan } = useSubscriptions();
+  const navigate = useNavigate();
 
   const isActive = (href: string[]) => {
-    return href.includes(location.pathname);
+    if (href.length === 0) {
+      return false;
+    }
+
+    if (href.length === 1 && href[0] === '/') {
+      return location.pathname === '/';
+    }
+
+    return href.some((h) => location.pathname.startsWith(h));
   };
 
   return (
@@ -30,10 +42,14 @@ export function Sidebar({ isCollapsed, setIsCollapsed }: SidebarProps) {
               borderBottom: '1px solid var(--gray-5)'
             }}
           >
-            <Flex align="center" gap="2">
-              <img src="/logo.png" alt="Metallic" width={20} height={20} />
-              <span className="logo-text">Metallic</span>
-            </Flex>
+            <RadixLink asChild underline="none">
+              <Link to="/">
+                <Flex align="center" gap="2">
+                  <img src="/logo.png" alt="Metallic" width={20} height={20} />
+                  <span className="logo-text">Metallic</span>
+                </Flex>
+              </Link>
+            </RadixLink>
             <Flex gap="2" align="center" justify="start">
               <Button variant="ghost" color="gray" size="1" onClick={() => setIsCollapsed(true)}>
                 <SidePanelIcon />
@@ -46,12 +62,7 @@ export function Sidebar({ isCollapsed, setIsCollapsed }: SidebarProps) {
                 <Flex direction="column" justify="start" gap="1">
                   <ul>
                     <li>
-                      <RadixLink
-                        asChild
-                        color="gray"
-                        href="/"
-                        className={`sidebar-link ${isActive(['/']) ? 'active' : ''}`}
-                      >
+                      <RadixLink asChild color="gray" className={`sidebar-link ${isActive(['/']) ? 'active' : ''}`}>
                         <Link to="/">
                           <DashboardIcon color="var(--gray-9)" />
                           {'Overview'}
@@ -157,6 +168,26 @@ export function Sidebar({ isCollapsed, setIsCollapsed }: SidebarProps) {
               </nav>
             </Flex>
           </ScrollArea>
+          {['free', 'developer'].includes(plan) && (
+            <Fragment>
+              <Flex direction="column" gap="1" p={'3'} justify="center">
+                <Button
+                  size="2"
+                  variant="soft"
+                  color="blue"
+                  highContrast
+                  style={{ justifyContent: 'center', height: '36px' }}
+                  onClick={() => navigate('/billing/plans')}
+                >
+                  <Flex justify="between" align="center" gap="2" p="1" style={{ width: '100%' }}>
+                    <span>Upgrade plan</span>
+                    <RocketIcon />
+                  </Flex>
+                </Button>
+              </Flex>
+              <Separator size="4" />
+            </Fragment>
+          )}
           <Flex direction="column" justify="start" gap="2" p="4" style={{ borderTop: '1px solid var(--gray-5)' }}>
             <RadixLink asChild color="gray" size="2" m="1" underline="none" highContrast>
               <a href="https://github.com/metallichq" target="_blank">

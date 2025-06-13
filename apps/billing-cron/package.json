@@ -1,0 +1,23 @@
+{
+  "name": "@metallichq/billing-cron",
+  "version": "0.1.0",
+  "private": true,
+  "main": "dist/index.js",
+  "type": "module",
+  "scripts": {
+    "clean": "rimraf tsconfig.tsbuildinfo dist/*",
+    "build": "npm run clean && tsc",
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "npm run build && node dist/index.js"
+  },
+  "dependencies": {
+    "@metallichq/control-plane": "file:../../packages/control-plane",
+    "@metallichq/database": "file:../../packages/database",
+    "@metallichq/shared": "file:../../packages/shared"
+  },
+  "devDependencies": {
+    "@metallichq/types": "file:../../packages/types",
+    "dotenv": "^16.3.1",
+    "rimraf": "^5.0.5"
+  }
+}

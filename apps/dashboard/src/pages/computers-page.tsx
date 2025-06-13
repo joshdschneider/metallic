@@ -188,14 +188,13 @@ export default function ComputersPage() {
               <Table.ColumnHeaderCell>Template</Table.ColumnHeaderCell>
               <Table.ColumnHeaderCell>Region</Table.ColumnHeaderCell>
               <Table.ColumnHeaderCell>Created At</Table.ColumnHeaderCell>
-              <Table.ColumnHeaderCell></Table.ColumnHeaderCell>
             </Table.Row>
           </Table.Header>
 
           <Table.Body>
             {computers.map((computer) => {
               return (
-                <Table.Row className="row-clickable row-va-middle">
+                <Table.Row className="row-va-middle" key={computer.id}>
                   <Table.Cell>
                     <Code variant="ghost" color="gray" highContrast>
                       <span>{computer.id}</span>
@@ -218,9 +217,6 @@ export default function ComputersPage() {
                     <Code variant="ghost" color="gray">
                       {new Date(computer.created_at).toLocaleString()}
                     </Code>
-                  </Table.Cell>
-                  <Table.Cell align="right">
-                    <ChevronRightIcon color="gray" />
                   </Table.Cell>
                 </Table.Row>
               );

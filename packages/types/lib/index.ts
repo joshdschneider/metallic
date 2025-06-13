@@ -1,4 +1,5 @@
 export * from './api-key.js';
+export * from './billing.js';
 export * from './computer.js';
 export * from './organization.js';
 export * from './project.js';

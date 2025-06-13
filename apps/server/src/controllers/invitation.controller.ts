@@ -1,4 +1,4 @@
-import { HttpError, OrganizationService, WorkOSClient } from '@metallichq/shared';
+import { HttpError, OrganizationService, PaywallClient, WorkOSClient } from '@metallichq/shared';
 import {
   InvitationObject,
   InvitationRevokedObject,
@@ -92,6 +92,9 @@ export const sendInvitation = async (req: Request, res: Response, next: NextFunc
     if (!organization) {
       throw HttpError.notFound(`Organization not found with ID: ${organization_id}`);
     }
+
+    const { subscriptions } = parsedReq.data.locals;
+    PaywallClient.checkAllowedInvitations({ subscriptions });
 
     const invitation = await WorkOSClient.sendInvitation(organization.workos_organization_id, {
       email,

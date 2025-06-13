@@ -267,7 +267,7 @@ export const HomePage: React.FC = () => {
                               className="reset-button Chip gray"
                               onClick={() => {
                                 copyToClipboard(
-                                  selectedLanguage === 'node' ? 'npm install metallic' : 'pip install metallic'
+                                  selectedLanguage === 'node' ? 'npm install @metallichq/sdk' : 'pip install metallichq'
                                 );
                               }}
                               style={{
@@ -277,7 +277,7 @@ export const HomePage: React.FC = () => {
                               }}
                             >
                               <Code size="1" variant="ghost" color="gray" weight="regular">
-                                {selectedLanguage === 'node' ? 'npm install metallic' : 'pip install metallic'}
+                                {selectedLanguage === 'node' ? 'npm install @metallichq/sdk' : 'pip install metallichq'}
                               </Code>
                             </button>
                           </Tooltip>
@@ -320,7 +320,7 @@ export const HomePage: React.FC = () => {
                             }}
                           >
                             Spin up a computer
-                          </span>{' '}
+                          </span>
                           <ExternalLinkIcon />
                         </RadixLink>
                         <RadixLink
@@ -338,7 +338,7 @@ export const HomePage: React.FC = () => {
                             }}
                           >
                             Create a custom template
-                          </span>{' '}
+                          </span>
                           <ExternalLinkIcon />
                         </RadixLink>
                       </Grid>

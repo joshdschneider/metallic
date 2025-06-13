@@ -12,8 +12,9 @@
     "dev": "nodemon"
   },
   "dependencies": {
-    "@metallichq/providers": "file:../../packages/providers",
+    "@metallichq/control-plane": "file:../../packages/control-plane",
     "@metallichq/shared": "file:../../packages/shared",
+    "@sentry/node": "^9.28.1",
     "@workos-inc/node": "^7.27.5",
     "axios": "^1.8.4",
     "cookies": "^0.9.1",

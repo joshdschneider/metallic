@@ -1,0 +1,23 @@
+{
+  "name": "@metallichq/control-plane",
+  "version": "0.1.0",
+  "private": true,
+  "main": "dist/index.js",
+  "type": "module",
+  "scripts": {
+    "clean": "rimraf tsconfig.tsbuildinfo dist/*",
+    "build": "npm run clean && tsc",
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "npm run build && node dist/index.js",
+    "dev": "nodemon"
+  },
+  "dependencies": {
+    "@metallichq/providers": "file:../providers",
+    "@metallichq/shared": "file:../shared"
+  },
+  "devDependencies": {
+    "@metallichq/types": "file:../packages/types",
+    "nodemon": "^3.1.0",
+    "rimraf": "^5.0.5"
+  }
+}

@@ -12,6 +12,7 @@ export const TemplateSchema = z.object({
   description: z.string().nullable(),
   instance_type: z.string(),
   storage_gb: z.number(),
+  rootfs_gb: z.number(),
   image: z.string(),
   init: InitSchema.nullable(),
   is_public: z.boolean(),

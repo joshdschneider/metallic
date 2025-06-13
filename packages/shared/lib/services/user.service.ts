@@ -4,8 +4,11 @@ import {
   OrganizationMembership,
   OrganizationMembershipSchema,
   OrganizationSchema,
+  Subscription,
+  SubscriptionSchema,
   type User
 } from '@metallichq/types';
+import { z } from 'zod';
 import { deleted, generateId, HttpError, now, Resource } from '../utils/index.js';
 
 export const getUserAccount = async (
@@ -17,10 +20,11 @@ export const getUserAccount = async (
 ): Promise<{
   organization: Organization;
   membership: OrganizationMembership;
+  subscriptions: Subscription[];
 } | null> => {
   const user = await database.user.findUnique({
     where: { id: userId, deleted_at: null },
-    include: { organization_memberships: { include: { organization: true } } }
+    include: { organization_memberships: { include: { organization: { include: { subscriptions: true } } } } }
   });
 
   if (!user) {
@@ -33,9 +37,13 @@ export const getUserAccount = async (
       (membership) => membership.organization.workos_organization_id === opts.organizationIdFromCookie
     );
     if (membershipFromCookie) {
-      const { organization, ...membership } = membershipFromCookie;
+      const {
+        organization: { subscriptions, ...org },
+        ...membership
+      } = membershipFromCookie;
       return {
-        organization: OrganizationSchema.parse(organization),
+        organization: OrganizationSchema.parse(org),
+        subscriptions: z.array(SubscriptionSchema).parse(subscriptions),
         membership: OrganizationMembershipSchema.parse(membership)
       };
     }
@@ -46,21 +54,32 @@ export const getUserAccount = async (
       (membership) => membership.organization.id === opts.organizationIdFromQueryParams
     );
     if (membershipFromQueryParams) {
-      const { organization, ...membership } = membershipFromQueryParams;
+      const {
+        organization: { subscriptions, ...org },
+        ...membership
+      } = membershipFromQueryParams;
       return {
-        organization: OrganizationSchema.parse(organization),
+        organization: OrganizationSchema.parse(org),
+        subscriptions: z.array(SubscriptionSchema).parse(subscriptions),
         membership: OrganizationMembershipSchema.parse(membership)
       };
     }
   }
 
   const firstMembership = memberships.pop();
-  return firstMembership
-    ? {
-        organization: OrganizationSchema.parse(firstMembership.organization),
-        membership: OrganizationMembershipSchema.parse(firstMembership)
-      }
-    : null;
+  if (!firstMembership) {
+    return null;
+  }
+
+  const {
+    organization: { subscriptions, ...org },
+    ...membership
+  } = firstMembership;
+  return {
+    organization: OrganizationSchema.parse(org),
+    subscriptions: z.array(SubscriptionSchema).parse(subscriptions),
+    membership: OrganizationMembershipSchema.parse(membership)
+  };
 };
 
 export const getUserById = async (id: string): Promise<User | null> => {

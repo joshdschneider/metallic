@@ -1,12 +1,19 @@
 import { database, Prisma } from '@metallichq/database';
-import { type Organization, OrganizationSchema, type Project, ProjectSchema } from '@metallichq/types';
+import {
+  type Organization,
+  OrganizationSchema,
+  type Project,
+  ProjectSchema,
+  Subscription,
+  SubscriptionSchema
+} from '@metallichq/types';
 import { z } from 'zod';
 import { generateId, now, Resource } from '../utils/helpers.js';
 import { hashApiKey } from './encryption.service.js';
 
 export const getProjectByApiKey = async (
   apiKey: string
-): Promise<(Project & { organization: Organization }) | null> => {
+): Promise<(Project & { organization: Organization & { subscriptions: Subscription[] } }) | null> => {
   const keyHash = await hashApiKey(apiKey);
 
   let where: Prisma.ApiKeyWhereUniqueInput;
@@ -18,14 +25,16 @@ export const getProjectByApiKey = async (
 
   const key = await database.apiKey.findUnique({
     where,
-    select: { project: { include: { organization: true } } }
+    select: { project: { include: { organization: { include: { subscriptions: true } } } } }
   });
 
   if (!key) {
     return null;
   }
 
-  return ProjectSchema.extend({ organization: OrganizationSchema }).parse(key.project);
+  return ProjectSchema.extend({
+    organization: OrganizationSchema.extend({ subscriptions: z.array(SubscriptionSchema) })
+  }).parse(key.project);
 };
 
 export const getProjectById = async (id: string): Promise<Project | null> => {

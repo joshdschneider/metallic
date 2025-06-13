@@ -1,6 +1,7 @@
-import { PlusCircledIcon } from '@radix-ui/react-icons';
-import { Box, Button, Flex, Popover, ScrollArea, Separator, Skeleton, Text } from '@radix-ui/themes';
+import { GearIcon, PlusCircledIcon } from '@radix-ui/react-icons';
+import { Box, Button, Flex, IconButton, Popover, ScrollArea, Separator, Skeleton, Text } from '@radix-ui/themes';
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useProjects } from '../hooks/use-projects';
 import { DEFAULT_PROJECT_NAME } from '../utils/constants';
 import { captureException } from '../utils/error';
@@ -11,6 +12,7 @@ export const ProjectPopover: React.FC = () => {
   const { loading, projects, selectedProject, switchProjects } = useProjects();
   const [open, setOpen] = useState(false);
   const [openDialog, setOpenDialog] = useState(false);
+  const navigate = useNavigate();
 
   const handleProjectChange = (projectId: string) => {
     if (!selectedProject || projectId === selectedProject.id) {
@@ -78,6 +80,20 @@ export const ProjectPopover: React.FC = () => {
                   >
                     <Flex align="center" justify="between" width="100%">
                       <Text as="span">{proj.name || DEFAULT_PROJECT_NAME}</Text>
+                      {proj.id === selectedProject.id && (
+                        <IconButton
+                          variant="ghost"
+                          color="gray"
+                          highContrast
+                          onClick={() => {
+                            navigate(`/project`);
+                            setOpen(false);
+                          }}
+                          style={{ pointerEvents: 'all' }}
+                        >
+                          <GearIcon />
+                        </IconButton>
+                      )}
                     </Flex>
                   </Button>
                 );

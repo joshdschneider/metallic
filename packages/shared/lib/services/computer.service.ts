@@ -1,5 +1,16 @@
 import { database, Prisma } from '@metallichq/database';
-import { Computer, ComputerEvent, ComputerSchema, ComputerState, PaginationParameters } from '@metallichq/types';
+import {
+  Computer,
+  ComputerEvent,
+  ComputerEventSchema,
+  ComputerSchema,
+  ComputerState,
+  PaginationParameters,
+  Template,
+  TemplateSchema,
+  UsageRecord,
+  UsageRecordSchema
+} from '@metallichq/types';
 import { z } from 'zod';
 import { PAGINATION_DEFAULT_LIMIT, PAGINATION_MAX_LIMIT, PAGINATION_MIN_LIMIT } from '../utils/constants.js';
 import { generateId, now, nowUnix, Resource } from '../utils/helpers.js';
@@ -16,12 +27,46 @@ export const getComputerById = async (id: string): Promise<Computer | null> => {
   return ComputerSchema.parse(computer);
 };
 
+export const getComputerExtendedById = async (
+  id: string,
+  options?: { includeDeleted?: boolean }
+): Promise<(Computer & { template: Template; events: ComputerEvent[]; usage_records: UsageRecord[] }) | null> => {
+  const computer = await database.computer.findUnique({
+    where: { id, deleted_at: options?.includeDeleted ? undefined : null },
+    include: {
+      template: true,
+      events: true,
+      usage_records: true
+    }
+  });
+
+  if (!computer) {
+    return null;
+  }
+
+  return ComputerSchema.extend({
+    events: z.array(ComputerEventSchema),
+    usage_records: z.array(UsageRecordSchema),
+    template: TemplateSchema
+  }).parse(computer);
+};
+
 export const countComputersByProjectId = async (projectId: string): Promise<number> => {
   const count = await database.computer.count({
     where: { deleted_at: null, project_id: projectId }
   });
 
   return count;
+};
+
+export const countRunningComputers = async (organizationId: string): Promise<number> => {
+  return await database.computer.count({
+    where: {
+      project: { organization_id: organizationId },
+      state: { in: ['started', 'starting'] },
+      deleted_at: null
+    }
+  });
 };
 
 export const getComputersByProjectId = async (
@@ -155,4 +200,11 @@ export const createComputerEvents = async (events: Omit<ComputerEvent, 'id'>[]):
       metadata: event.metadata ?? undefined
     }))
   });
+};
+
+export const getChildren = async (parentComputerId: string): Promise<Computer[]> => {
+  const computers = await database.computer.findMany({
+    where: { parent_computer_id: parentComputerId, deleted_at: null }
+  });
+  return z.array(ComputerSchema).parse(computers);
 };

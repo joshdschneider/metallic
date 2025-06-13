@@ -1,4 +1,4 @@
-import { ComputeProvider } from '@metallichq/providers';
+import * as ControlPlane from '@metallichq/control-plane';
 import {
   ApiKeyService,
   DEFAULT_EMAIL_SUBSCRIPTIONS,
@@ -44,7 +44,8 @@ export const onUserAuthenticated = async (workosUser: WorkOSUser) => {
     const workosOrg = await WorkOSClient.createOrganization(inferOrganizationName(user) || 'Untitled');
     const organization = await OrganizationService.createOrganization({
       name: inferOrganizationName(user) || null,
-      workos_organization_id: workosOrg.id
+      workos_organization_id: workosOrg.id,
+      stripe_customer_id: null
     });
 
     const workosOrgMembership = await WorkOSClient.createOrganizationMembership({
@@ -68,7 +69,7 @@ export const onUserAuthenticated = async (workosUser: WorkOSUser) => {
 
     await Promise.all([
       ApiKeyService.createApiKey({ projectId: project.id, name: null }),
-      ComputeProvider.onProjectCreated(project.id)
+      ControlPlane.onProjectCreated(project.id)
     ]);
   } else {
     for (const workosOrgMembership of workosOrgMemberships) {
@@ -79,7 +80,8 @@ export const onUserAuthenticated = async (workosUser: WorkOSUser) => {
       if (!organization) {
         organization = await OrganizationService.createOrganization({
           name: inferOrganizationName(user) || null,
-          workos_organization_id: workosOrgMembership.organizationId
+          workos_organization_id: workosOrgMembership.organizationId,
+          stripe_customer_id: null
         });
       }
 
@@ -106,7 +108,7 @@ export const onUserAuthenticated = async (workosUser: WorkOSUser) => {
 
         await Promise.all([
           ApiKeyService.createApiKey({ projectId: project.id, name: null }),
-          ComputeProvider.onProjectCreated(project.id)
+          ControlPlane.onProjectCreated(project.id)
         ]);
       }
     }

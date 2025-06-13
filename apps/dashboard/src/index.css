@@ -59,8 +59,12 @@ pre {
   margin: 0;
 }
 
-button {
+button:not([disabled]):not([aria-disabled='true']) {
   cursor: pointer !important;
+}
+
+button {
+  white-space: nowrap !important;
 }
 
 #__next {
@@ -949,4 +953,8 @@ button {
 
 .rt-TableColumnHeaderCell {
   font-weight: 500;
+}
+
+.enterprise-card::before {
+  background-color: var(--gray-1);
 }

@@ -26,13 +26,16 @@ model User {
 model Organization {
   id                     String  @id
   workos_organization_id String  @unique
+  stripe_customer_id     String? @unique
   name                   String?
   created_at             String
   updated_at             String
   deleted_at             String?
 
-  memberships OrganizationMembership[]
-  projects    Project[]
+  memberships     OrganizationMembership[]
+  subscriptions   Subscription[]
+  payment_methods PaymentMethod[]
+  projects        Project[]
 }
 
 model OrganizationMembership {
@@ -67,6 +70,36 @@ model Project {
   organization Organization @relation(fields: [organization_id], references: [id])
 }
 
+model Subscription {
+  id                     String  @id
+  organization_id        String
+  stripe_subscription_id String  @unique
+  plan                   String
+  status                 String
+  created_at             String
+  updated_at             String
+  deleted_at             String?
+
+  organization Organization @relation(fields: [organization_id], references: [id])
+}
+
+model PaymentMethod {
+  id                       String  @id
+  organization_id          String
+  stripe_payment_method_id String  @unique
+  type                     String
+  card_brand               String?
+  card_last4               String?
+  card_exp_month           Int?
+  card_exp_year            Int?
+  is_default               Boolean
+  created_at               String
+  updated_at               String
+  deleted_at               String?
+
+  organization Organization @relation(fields: [organization_id], references: [id])
+}
+
 model ApiKey {
   id         String  @id
   project_id String
@@ -89,6 +122,7 @@ model Template {
   description   String?
   instance_type String
   storage_gb    Int
+  rootfs_gb     Int
   image         String
   init          Json?
   is_public     Boolean
@@ -102,21 +136,23 @@ model Template {
 }
 
 model Computer {
-  id            String  @id
-  project_id    String
-  template_slug String
-  provider      String
-  provider_id   String
-  region        String
-  state         String
-  ttl_seconds   Int?
-  auto_destroy  Boolean
-  metadata      Json?
-  created_at    String
-  updated_at    String
-  deleted_at    String?
+  id                   String  @id
+  project_id           String
+  template_slug        String
+  provider             String
+  provider_computer_id String
+  parent_computer_id   String?
+  region               String
+  state                String
+  ttl_seconds          Int?
+  auto_destroy         Boolean
+  metadata             Json?
+  created_at           String
+  updated_at           String
+  deleted_at           String?
 
-  events ComputerEvent[]
+  events        ComputerEvent[]
+  usage_records UsageRecord[]
 
   project  Project  @relation(fields: [project_id], references: [id])
   template Template @relation(fields: [template_slug], references: [slug])
@@ -126,8 +162,18 @@ model ComputerEvent {
   id          String @id
   computer_id String
   type        String
-  timestamp   Int
   metadata    Json?
+  timestamp   Int
+
+  computer Computer @relation(fields: [computer_id], references: [id])
+}
+
+model UsageRecord {
+  id          String @id
+  computer_id String
+  event_name  String
+  value       Int
+  timestamp   Int
 
   computer Computer @relation(fields: [computer_id], references: [id])
 }

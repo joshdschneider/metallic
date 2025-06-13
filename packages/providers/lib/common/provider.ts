@@ -1,4 +1,4 @@
-import { INSTANCE_TYPES } from '@metallichq/shared';
+import { captureException, INSTANCE_TYPES } from '@metallichq/shared';
 import {
   CreateComputerRequest,
   CreateComputerResponse,
@@ -103,16 +103,16 @@ export const forkComputer = async (req: ForkComputerRequest): Promise<ForkComput
   const appName = FlyHelpers.projectIdToAppName(req.project_id);
   const machine = await FlyMachines.getMachine({
     app_name: appName,
-    machine_id: req.provider_computer_id
+    machine_id: req.parent_provider_computer_id
   });
 
   if (!machine) {
-    throw new Error(`Machine ${req.provider_computer_id} not found`);
+    throw new Error(`Machine ${req.parent_provider_computer_id} not found`);
   }
 
   const mount = machine.config.mounts?.[0];
   if (!mount) {
-    throw new Error(`Machine ${req.provider_computer_id} has no mounted volume`);
+    throw new Error(`Machine ${req.parent_provider_computer_id} has no mounted volume`);
   }
 
   const forkedVolume = await FlyVolumes.createVolume({
@@ -183,7 +183,6 @@ export const waitForState = async (req: WaitForStateRequest): Promise<void> => {
 
 export const destroyComputer = async (req: DestroyComputerRequest): Promise<void> => {
   const appName = FlyHelpers.projectIdToAppName(req.project_id);
-
   const machine = await FlyMachines.getMachine({
     app_name: appName,
     machine_id: req.provider_computer_id
@@ -207,6 +206,9 @@ export const destroyComputer = async (req: DestroyComputerRequest): Promise<void
   });
 
   for (const mount of mounts) {
-    await FlyVolumes.destroyVolume({ app_name: appName, volume_id: mount.volume });
+    FlyVolumes.destroyVolume({
+      app_name: appName,
+      volume_id: mount.volume
+    }).catch((err) => captureException(`Failed to destroy volume ${mount.volume}: ${err}`));
   }
 };

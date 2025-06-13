@@ -23,10 +23,15 @@ export const apiKeyAuth = async (req: Request, res: Response, next: NextFunction
       throw HttpError.unauthorized('Invalid API key');
     }
 
-    const { organization, ...rest } = project;
+    const {
+      organization: { subscriptions, ...org },
+      ...proj
+    } = project;
+
     res.locals['auth_method'] = 'api_key';
-    res.locals['organization'] = organization;
-    res.locals['project'] = rest;
+    res.locals['organization'] = org;
+    res.locals['subscriptions'] = subscriptions;
+    res.locals['project'] = proj;
 
     ApiKeyAuthResponseLocalsSchema.parse(res.locals);
 
@@ -88,10 +93,11 @@ export const sessionAuth = async (req: Request, res: Response, next: NextFunctio
       throw HttpError.unauthorized('Account not found');
     }
 
-    const { organization, membership } = userAccount;
+    const { organization, subscriptions, membership } = userAccount;
     res.locals['user'] = user;
     res.locals['organization'] = organization;
     res.locals['organization_membership'] = membership;
+    res.locals['subscriptions'] = subscriptions;
     res.locals['project'] = project;
     res.locals['auth_method'] = 'session';
 

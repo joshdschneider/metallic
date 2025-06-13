@@ -12,6 +12,10 @@ export function nowUnix(): number {
   return Math.floor(Date.now() / 1000);
 }
 
+export function toUnix(isoString: string): number {
+  return Math.floor(new Date(isoString).getTime() / 1000);
+}
+
 export function unixToISOString(unixSeconds: number): string {
   return new Date(unixSeconds * 1000).toISOString();
 }
@@ -32,6 +36,9 @@ export enum Resource {
   User = 'user',
   Organization = 'org',
   OrganizationMembership = 'om',
+  Subscription = 'sub',
+  PaymentMethod = 'pm',
+  UsageRecord = 'ur',
   Project = 'proj',
   ApiKey = 'key',
   Computer = 'com',
@@ -60,9 +67,7 @@ export async function verifyHeartbeatToken(token: string): Promise<string> {
   try {
     const payload = await jose.jwtVerify<{
       computer_id: string;
-    }>(token, new TextEncoder().encode(envVars.ENCRYPTION_KEY), {
-      algorithms: ['HS256']
-    });
+    }>(token, new TextEncoder().encode(envVars.ENCRYPTION_KEY), { algorithms: ['HS256'] });
     return payload.payload['computer_id'];
   } catch (err) {
     throw HttpError.unauthorized('Invalid agent token');

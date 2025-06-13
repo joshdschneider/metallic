@@ -1,3 +1,5 @@
+import './utils/instrument.js';
+
 import { envVars, getLogger, TemplateService } from '@metallichq/shared';
 import express, { type Express } from 'express';
 import http from 'http';

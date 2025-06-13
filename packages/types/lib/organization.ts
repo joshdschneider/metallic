@@ -3,6 +3,7 @@ import { z } from 'zod';
 export const OrganizationSchema = z.object({
   id: z.string(),
   workos_organization_id: z.string(),
+  stripe_customer_id: z.string().nullable(),
   name: z.string().nullable(),
   created_at: z.string(),
   updated_at: z.string(),

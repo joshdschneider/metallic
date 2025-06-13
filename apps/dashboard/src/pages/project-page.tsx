@@ -63,8 +63,8 @@ export default function ProjectPage() {
             </Heading>
           </Flex>
           <Card variant="surface" size="3" style={{ borderColor: 'var(--red-6)' }}>
-            <Flex direction="column">
-              <Flex direction="column" justify="start" mb="4">
+            <Flex align="center" justify="between" gap="4">
+              <Flex direction="column" justify="start" gap="1">
                 <Text size="2" weight="medium">
                   Delete project
                 </Text>

@@ -1,10 +1,13 @@
 import { Avatar, Button, Flex, IconButton, Popover, Separator, Skeleton, Text } from '@radix-ui/themes';
+import { Fragment } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/use-auth';
+import { useSubscriptions } from '../hooks/use-subscriptions';
 import { getUserAvatarFallback, getUserName } from '../utils/helpers';
 
 export const AvatarPopover: React.FC = () => {
   const { loading, user, logout } = useAuth();
+  const { plan } = useSubscriptions();
   const navigate = useNavigate();
 
   if (loading) {
@@ -97,6 +100,23 @@ export const AvatarPopover: React.FC = () => {
           </Button>
         </Flex>
         <Separator size="4" />
+        {['free', 'developer'].includes(plan) && (
+          <Fragment>
+            <Flex direction="column" gap="1" p={'2'} justify="center">
+              <Button
+                size="2"
+                variant="soft"
+                color="blue"
+                highContrast
+                style={{ justifyContent: 'center' }}
+                onClick={() => navigate('/billing/plans')}
+              >
+                Upgrade plan
+              </Button>
+            </Flex>
+            <Separator size="4" />
+          </Fragment>
+        )}
         <Flex direction="column" gap="1" p={'2'} justify="start">
           <Button
             size="2"
