@@ -19,6 +19,7 @@ COPY tsconfig.base.json ./
 COPY packages/database/ packages/database/
 COPY packages/types/ packages/types/
 COPY packages/shared/ packages/shared/
+COPY packages/providers/ packages/providers/
 COPY packages/control-plane/ packages/control-plane/
 COPY apps/server/ apps/server/
 
@@ -32,6 +33,7 @@ RUN npm run db:generate
 RUN npm run build -w @metallichq/database
 RUN npm run build -w @metallichq/types
 RUN npm run build -w @metallichq/shared
+RUN npm run build -w @metallichq/providers
 RUN npm run build -w @metallichq/control-plane
 RUN npm run build -w @metallichq/server
 
@@ -48,6 +50,7 @@ COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/packages/database ./packages/database
 COPY --from=builder /app/packages/types ./packages/types
 COPY --from=builder /app/packages/shared ./packages/shared
+COPY --from=builder /app/packages/providers ./packages/providers
 COPY --from=builder /app/packages/control-plane ./packages/control-plane
 COPY --from=builder /app/apps/server ./apps/server
 
