@@ -1,3 +1,3 @@
-# Metallic Core
+# Metallic
 
-Core services for the Metallic platform.
+Virtual computers for AI agents.
